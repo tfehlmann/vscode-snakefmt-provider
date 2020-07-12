@@ -103,12 +103,25 @@ export class SnakemakeDocumentFormattingEditProvider implements vscode.DocumentF
         codeContent = codeContent.substr(offset, length);
       }
 
+      let eol = document.eol === vscode.EndOfLine.CRLF ? '\n': '\r\n';
+      if(!codeContent.endsWith(eol)){
+        codeContent += eol;
+      }
+
       let workingPath = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.path : '';
       if (!document.isUntitled) {
         workingPath = path.dirname(document.fileName);
       }
 
-      const proc = cp.exec(`${formatCommandBinPath} --compact-diff -`, (error, stdout, stderr) => {
+      let config = vscode.workspace.getConfiguration('snakefmt');
+      let cfg_file = config.get<string>('config');
+
+      let args = ["--compact-diff", "-"];
+      if(cfg_file) {
+        args.push("--config");
+        args.push(cfg_file);
+      }
+      const proc = cp.execFile(formatCommandBinPath, args, {windowsHide: true, maxBuffer: 1024*1024*1024}, (error, stdout, stderr) => {
         try {
           if (error !== null && error.code !== 0 && stderr.length !== 0) {
             outputChannel.show();
@@ -125,7 +138,7 @@ export class SnakemakeDocumentFormattingEditProvider implements vscode.DocumentF
             return reject();
           }
 
-          return resolve(getTextEditsFromPatch(codeContent, stdout));
+          return resolve(getTextEditsFromPatch(codeContent, stdout, range));
         } catch (e) {
           reject(e);
         }

@@ -60,7 +60,7 @@ class Edit {
     }
 }
 
-export function getTextEditsFromPatch(before: string, patch: string): TextEdit[] {
+export function getTextEditsFromPatch(before: string, patch: string, range: Range | null): TextEdit[] {
     if (patch.startsWith('---') || patch.startsWith("=====> Diff for stdin <=====")) {
         // Strip the first two lines
         patch = patch.substring(patch.indexOf('@@'));
@@ -80,12 +80,28 @@ export function getTextEditsFromPatch(before: string, patch: string): TextEdit[]
     }
     const textEdits: TextEdit[] = [];
 
+    const start_offset = range? range.start : new Position(0,0);
     // Add line feeds and build the text edits
     patches.forEach((p) => {
         p.diffs.forEach((diff) => {
             diff[1] += EOL;
         });
-        getTextEditsInternal(before, p.diffs, p.start1).forEach((edit) => textEdits.push(edit.apply()));
+        getTextEditsInternal(before, p.diffs, p.start1).forEach((edit) => {
+            if(edit.start.line === 0){
+                edit.start = edit.start.translate(start_offset.line, start_offset.character);
+            } else {
+                edit.start = edit.start.translate(start_offset.line);
+            }
+            if(edit.end){
+                if(edit.start.line === 0){
+                    edit.end = edit.end.translate(start_offset.line, start_offset.character);
+                }
+                else {
+                    edit.end = edit.end.translate(start_offset.line);
+                }
+            }
+            textEdits.push(edit.apply());
+        });
     });
 
     return textEdits;
