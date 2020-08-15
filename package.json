@@ -92,5 +92,6 @@
 		"type": "git",
 		"url": "https://github.com/tfehlmann/vscode-snakefmt-provider"
 	},
+	"icon": "snakefmt_vscode.png",
 	"license": "MIT"
 }
