@@ -2,7 +2,7 @@
 	"name": "snakefmt",
 	"displayName": "Snakefmt",
 	"description": "Use Snakefmt in Visual Studio Code",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"publisher": "tfehlmann",
 	"engines": {
 		"vscode": "^1.46.0"
@@ -53,6 +53,11 @@
 					"type": "string",
 					"default": "",
 					"description": "snakefmt executable path on macOS"
+				},
+				"snakefmt.config": {
+					"type": "string",
+					"default": "${workspaceFolder}/pyproject.toml",
+					"description": "snakefmt configuration file"
 				},
 				"snakefmt.language.snakemake.enable": {
 					"type": "boolean",

@@ -1,20 +1,47 @@
-# snakefmt README
+# Snakefmt extension for Visual Studio code
 
-This is the README for your extension "snakefmt". After writing up a brief description, we recommend including the following sections.
+A [Visual Studio Code](https://code.visualstudio.com/) extension that formats [Snakemake](https://snakemake.readthedocs.io/) code using [Snakefmt](https://github.com/snakemake/snakefmt). It can be configured with a config file.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+This extensions uses snakefmt to format your snakemake code. 
 
-For example if there is an image subfolder under your extension project workspace:
+Files or code chunks can be formatted on-demand by right clicking in the document and
+selecting "Format Document", or by using the associated keyboard shortcut
+(usually Ctrl+⇧+F on Windows, Ctrl+⇧+I on Linux, and ⇧+⌥+F on macOS).
 
-\!\[feature X\]\(images/feature-x.png\)
+To automatically format a file on save, add the following to your
+vscode settings.json file:
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+```json
+{
+    "editor.formatOnSave": true
+}
+```
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+[Snakefmt](https://github.com/snakemake/snakefmt) needs to be installed. If it is not installed in a standard location you can specify the location of the executable in your vscode settings.json file:
+```json
+{
+    "snakefmt.executable": "/absolute/path/to/snakefmt"
+}
+```
+
+Placeholders can also be used in the `snakefmt.executable` value.
+The following placeholders are supported:
+
+- `${workspaceRoot}` - replaced by the absolute path of the current vscode workspace root.
+- `${workspaceFolder}` - replaced by the absolute path of the current vscode workspace. In case of outside-workspace files `${workspaceFolder}` expands to the absolute path of the first available workspace.
+- `${cwd}` - replaced by the current working directory of vscode.
+- `${env.VAR}` - replaced by the environment variable $VAR, e.g. `${env.HOME}` will be replaced by `$HOME`, your home directory.
+
+For example:
+- `${env.HOME}/miniconda3/envs/snakeenv/bin/snakefmt` - use a snakefmt version installed over conda in an environment named `snakeenv`.
+
+## Source code
+Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider
+
 
 ## Extension Settings
 
@@ -24,42 +51,13 @@ For example:
 
 This extension contributes the following settings:
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+* `snakefmt.executable`: path to snakefmt executable
+* `snakefmt.config`: optional absolute path to snakefmt config file (per default `${workspaceFolder}/pyproject.toml`, if existing)
 
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.1.0
 
-### 1.0.0
+Initial release
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**

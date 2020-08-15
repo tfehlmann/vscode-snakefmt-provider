@@ -14,6 +14,7 @@ import path = require('path');
 import { getBinPath } from './snakefmtPath';
 
 import { getTextEditsFromPatch } from './editor';
+import { fstat, existsSync } from 'fs';
 
 export let outputChannel = vscode.window.createOutputChannel('snakefmt');
 
@@ -30,7 +31,7 @@ function getPlatformString() {
 export class SnakemakeDocumentFormattingEditProvider implements vscode.DocumentFormattingEditProvider, vscode.DocumentRangeFormattingEditProvider {
   private defaultConfigure = {
     executable: 'snakefmt',
-    config: ''
+    config: '${workspaceFolder}/pyproject.toml'
   };
 
   public provideDocumentFormattingEdits(document: vscode.TextDocument, options: vscode.FormattingOptions, token: vscode.CancellationToken): Thenable<vscode.TextEdit[]> {
@@ -117,7 +118,7 @@ export class SnakemakeDocumentFormattingEditProvider implements vscode.DocumentF
       let cfg_file = config.get<string>('config');
 
       let args = ["--compact-diff", "-"];
-      if(cfg_file) {
+      if(cfg_file && existsSync(cfg_file)) {
         args.push("--config");
         args.push(cfg_file);
       }
