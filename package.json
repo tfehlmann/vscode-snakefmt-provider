@@ -3,7 +3,7 @@
     "displayName": "Snakefmt",
     "description": "Linting and formatting support for snakemake files using `snakefmt`.",
     "version": "0.2.0",
-    "preview": true,
+    "preview": false,
     "serverInfo": {
         "name": "Snakefmt",
         "module": "snakefmt"
