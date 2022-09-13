@@ -105,7 +105,7 @@ def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
         if settings["disableLinting"]:
             return []
         result = _run_tool_on_document(document, extra_args=["--check"])
-        range = lsp.Range(
+        rng = lsp.Range(
             start=lsp.Position(line=0, character=0), end=lsp.Position(line=0, character=0)
         )
         return (
@@ -113,7 +113,7 @@ def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
             if "unchanged" in result.stderr
             else [
                 lsp.Diagnostic(
-                    range=range,
+                    range=rng,
                     message="Document is not following snakefmt formatting",
                     severity=lsp.DiagnosticSeverity.Information,
                     code="snakefmt:not-formatted",
@@ -296,16 +296,19 @@ def _get_settings_by_document(document: workspace.Document | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
+# pylint: disable=too-many-branches,too-many-statements
 def _run_tool_on_document(
     document: workspace.Document,
     use_stdin: bool = False,
-    extra_args: Sequence[str] = [],
+    extra_args: Sequence[str] = None,
 ) -> utils.RunResult | None:
     """Runs tool on the given document.
 
     if use_stdin is true then contents of the document is passed to the
     tool via stdin.
     """
+    if extra_args is None:
+        extra_args = []
     # deep copy here to prevent accidentally updating global settings.
     settings = copy.deepcopy(_get_settings_by_document(document))
 
