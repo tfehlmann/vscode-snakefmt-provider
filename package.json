@@ -1,97 +1,188 @@
 {
-	"name": "snakefmt",
-	"displayName": "Snakefmt",
-	"description": "Use Snakefmt in Visual Studio Code",
-	"version": "0.1.0",
-	"publisher": "tfehlmann",
-	"engines": {
-		"vscode": "^1.46.0"
-	},
-	"dependencies": {
-		"diff-match-patch": "1.0.5",
-		"fs-extra": "9.0.1",
-		"inversify": "5.0.1",
-		"md5": "2.2.0",
-		"semver": "7.3.2",
-		"reflect-metadata": "0.1.13",
-		"@types/diff-match-patch": "1.0.32",
-		"@types/md5": "2.2.0",
-		"@types/semver": "5.5.0",
-		"@types/fs-extra": "9.0.1"
-	},
-	"categories": [
-		"Formatters"
-	],
-	"keywords": [
-		"Snakemake"
-	],
-	"activationEvents": [
-        "onLanguage:snakemake"
-	],
-	"main": "./out/extension.js",
-	"contributes": {
-		"configuration": {
-			"type": "object",
-			"title": "Snakefmt configuration",
-			"properties": {
-				"snakefmt.executable": {
-					"type": "string",
-					"default": "snakefmt",
-					"description": "snakefmt executable path"
-				},
-				"snakefmt.executable.windows": {
-					"type": "string",
-					"default": "",
-					"description": "snakefmt executable path on Windows"
-				},
-				 "snakefmt.executable.linux": {
-					"type": "string",
-					"default": "",
-					"description": "snakefmt executable path on Linux"
-				},
-				"snakefmt.executable.osx": {
-					"type": "string",
-					"default": "",
-					"description": "snakefmt executable path on macOS"
-				},
-				"snakefmt.config": {
-					"type": "string",
-					"default": "${workspaceFolder}/pyproject.toml",
-					"description": "snakefmt configuration file"
-				},
-				"snakefmt.language.snakemake.enable": {
-					"type": "boolean",
-					"default": true,
-					"description": "enable formatting for Snakemake (requires reloading Visual Studio Code)"
-				}
-			}
-		}
-	},
-	"scripts": {
-		"vscode:prepublish": "yarn run compile",
-		"compile": "tsc -p ./",
-		"lint": "eslint src --ext ts",
-		"watch": "tsc -watch -p ./",
-		"pretest": "yarn run compile && yarn run lint",
-		"test": "node ./out/test/runTest.js"
-	},
-	"devDependencies": {
-		"@types/vscode": "^1.46.0",
-		"@types/glob": "^7.1.1",
-		"@types/mocha": "^7.0.2",
-		"@types/node": "^13.11.0",
-		"eslint": "^6.8.0",
-		"@typescript-eslint/parser": "^2.30.0",
-		"@typescript-eslint/eslint-plugin": "^2.30.0",
-		"glob": "^7.1.6",
-		"mocha": "^7.1.2",
-		"typescript": "^3.8.3",
-		"vscode-test": "^1.3.0"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/tfehlmann/vscode-snakefmt-provider"
-	},
-	"icon": "snakefmt_vscode.png",
-	"license": "MIT"
+    "name": "snakefmt",
+    "displayName": "Snakefmt",
+    "description": "Linting and formatting support for snakemake files using `snakefmt`.",
+    "version": "0.2.0",
+    "preview": true,
+    "serverInfo": {
+        "name": "Snakefmt",
+        "module": "snakefmt"
+    },
+    "publisher": "tfehlmann",
+    "license": "MIT",
+    "homepage": "https://github.com/tfehlmann/vscode-snakefmt-provider",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/tfehlmann/vscode-snakefmt-provider.git"
+    },
+    "bugs": {
+        "url": "https://github.com/tfehlmann/vscode-snakefmt-provider/issues"
+    },
+    "icon": "snakefmt_vscode.png",
+    "galleryBanner": {
+        "color": "#1e415e",
+        "theme": "dark"
+    },
+    "keywords": [
+        "snakefmt",
+        "snakemake",
+        "formatting"
+    ],
+    "engines": {
+        "vscode": "^1.64.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Linters",
+        "Formatters"
+    ],
+    "extensionDependencies": [
+        "ms-python.python",
+        "snakemake.snakemake-lang"
+    ],
+    "activationEvents": [
+        "onLanguage:snakemake",
+        "onCommand:snakefmt.restart",
+        "workspaceContains:*.smk",
+        "workspaceContains:Snakefile",
+        "workspaceContains:*.snake"
+    ],
+    "main": "./dist/extension.js",
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "webpack",
+        "watch": "webpack --watch",
+        "package": "webpack --mode production --devtool source-map --config ./webpack.config.js",
+        "compile-tests": "tsc -p . --outDir out",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "format-check": "prettier --check 'src/**/*.ts' '.github/**/*.yml'",
+        "test": "node ./out/test/runTest.js",
+        "vsce-package": "vsce package -o snakefmt.vsix"
+    },
+    "contributes": {
+        "configuration": {
+            "properties": {
+                "snakefmt.logLevel": {
+                    "default": "error",
+                    "description": "The log level the extension logs at, defaults to 'error'",
+                    "enum": [
+                        "debug",
+                        "error",
+                        "info",
+                        "off",
+                        "warn"
+                    ],
+                    "scope": "window",
+                    "type": "string"
+                },
+                "snakefmt.disableLinting": {
+                    "default": false,
+                    "description": "Disable linting of snakemake files",
+                    "scope": "resource",
+                    "type": "boolean"
+                },
+                "snakefmt.args": {
+                    "default": [],
+                    "description": "Arguments passed in. Each argument is a separate item in the array.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "scope": "resource",
+                    "type": "array"
+                },
+                "snakefmt.config": {
+                    "default": "",
+                    "description": "Snakefmt config file. Deprecated. Use `snakefmt.args` instead.",
+                    "scope": "resource",
+                    "type": "string"
+                },
+                "snakefmt.path": {
+                    "default": [],
+                    "description": "When set to a path to snakefmt binary, extension will use that. NOTE: Using this option may slowdown server response time.",
+                    "scope": "resource",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "snakefmt.executable": {
+                    "default": "",
+                    "description": "Alias for `snakefmt.path`. Deprecated. Use `snakefmt.path` instead.",
+                    "scope": "resource",
+                    "type": "string"
+                },
+                "snakefmt.importStrategy": {
+                    "default": "useBundled",
+                    "description": "Defines where `snakefmt` is imported from. This setting may be ignored if `snakefmt.path` is set.",
+                    "enum": [
+                        "useBundled",
+                        "fromEnvironment"
+                    ],
+                    "enumDescriptions": [
+                        "Always use the bundled version of `snakefmt`.",
+                        "Use `snakefmt` from environment, fallback to bundled version only if `snakefmt` not available in the environment."
+                    ],
+                    "scope": "window",
+                    "type": "string"
+                },
+                "snakefmt.interpreter": {
+                    "default": [],
+                    "description": "When set to a path to python executable, extension will use that to launch the server and any subprocess.",
+                    "scope": "window",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "snakefmt.showNotifications": {
+                    "default": "off",
+                    "description": "Controls when notifications are shown by this extension.",
+                    "enum": [
+                        "off",
+                        "onError",
+                        "onWarning",
+                        "always"
+                    ],
+                    "enumDescriptions": [
+                        "All notifications are turned off, any errors or warning are still available in the logs.",
+                        "Notifications are shown only in the case of an error.",
+                        "Notifications are shown for errors and warnings.",
+                        "Notifications are show for anything that the server chooses to show."
+                    ],
+                    "scope": "machine",
+                    "type": "string"
+                }
+            }
+        },
+        "commands": [
+            {
+                "title": "Restart Server",
+                "category": "Snakefmt",
+                "command": "snakefmt.restart"
+            }
+        ]
+    },
+    "dependencies": {
+        "fs-extra": "^10.1.0",
+        "vscode-languageclient": "7.0.0"
+    },
+    "devDependencies": {
+        "@types/fs-extra": "^9.0.13",
+        "@types/vscode": "^1.64.0",
+        "@types/glob": "^8.0.0",
+        "@types/node": "14.x",
+        "@typescript-eslint/eslint-plugin": "^5.36.1",
+        "@typescript-eslint/parser": "^5.36.1",
+        "@vscode/test-electron": "^2.1.5",
+        "eslint": "^8.23.0",
+        "glob": "^8.0.3",
+        "prettier": "^2.7.1",
+        "typescript": "4.7.4",
+        "ts-loader": "^9.3.1",
+        "webpack": "^5.74.0",
+        "webpack-cli": "^4.10.0",
+        "vsce": "^2.11.0"
+    }
 }
