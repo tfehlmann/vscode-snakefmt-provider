@@ -77,7 +77,7 @@ def test_formatting():
 
     actual = []
     with utils.SnakemakeFile(contents, unformatted_test_file_path.parent) as file:
-        uri = utils.as_uri(str(file))
+        uri = utils.as_uri(file.fullpath)
 
         with session.LspSession() as ls_session:
             ls_session.initialize()
@@ -129,7 +129,7 @@ def test_formatting_with_custom_config():
 
     actual = []
     with utils.SnakemakeFile(contents, unformatted_test_file_path.parent) as file:
-        uri = utils.as_uri(str(file))
+        uri = utils.as_uri(file.fullpath)
 
         with session.LspSession() as ls_session:
             init_options = defaults.VSCODE_DEFAULT_INITIALIZE["initializationOptions"]
