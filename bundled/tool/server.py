@@ -11,6 +11,7 @@ import sys
 import traceback
 from typing import Any, Dict, Sequence
 
+
 # **********************************************************
 # Update sys.path before importing any bundled libraries.
 # **********************************************************
@@ -106,7 +107,8 @@ def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
             return []
         result = _run_tool_on_document(document, extra_args=["--check"])
         rng = lsp.Range(
-            start=lsp.Position(line=0, character=0), end=lsp.Position(line=0, character=0)
+            start=lsp.Position(line=0, character=0),
+            end=lsp.Position(line=0, character=0),
         )
         return (
             []

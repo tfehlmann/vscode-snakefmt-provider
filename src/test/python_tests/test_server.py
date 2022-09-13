@@ -4,7 +4,6 @@
 Test for linting over LSP.
 """
 import difflib
-
 from threading import Event
 
 from hamcrest import assert_that, is_
@@ -173,6 +172,7 @@ def test_formatting_with_custom_config():
     )
 
     assert_that(actual, is_(expected), "\n".join(diff))
+
 
 def test_formatting_with_default_config():
     """Test formatting a snakemake file with a default configuration file in the workspace."""
