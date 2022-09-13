@@ -140,7 +140,7 @@ class LspSession(MethodDispatcher):
     def notify_did_close(self, did_close_params):
         """Sends did close notification to LSP Server."""
         self._send_notification("textDocument/didClose", params=did_close_params)
-    
+
     def text_document_formatting(self, formatting_params):
         """Sends text document references request to LSP server."""
         fut = self._send_request("textDocument/formatting", params=formatting_params)

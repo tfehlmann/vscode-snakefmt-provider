@@ -17,15 +17,15 @@ TIMEOUT = 10  # 10 seconds
 
 def test_linting():
     """Test to linting on file open."""
-    TEST_FILE_PATH = constants.TEST_DATA / "sample1" / "toFormat.smk"
-    TEST_FILE_URI = utils.as_uri(str(TEST_FILE_PATH))
-    contents = TEST_FILE_PATH.read_text()
+    test_file_path = constants.TEST_DATA / "sample1" / "toFormat.smk"
+    test_file_uri = utils.as_uri(str(test_file_path))
+    contents = test_file_path.read_text()
 
     actual = []
 
     with session.LspSession() as ls_session:
         ls_session.initialize(defaults.VSCODE_DEFAULT_INITIALIZE)
-        
+
         done = Event()
 
         def _handler(params):
@@ -38,7 +38,7 @@ def test_linting():
         ls_session.notify_did_open(
             {
                 "textDocument": {
-                    "uri": TEST_FILE_URI,
+                    "uri": test_file_uri,
                     "languageId": "snakemake",
                     "version": 1,
                     "text": contents,
@@ -50,7 +50,7 @@ def test_linting():
         done.wait(TIMEOUT)
 
     expected = {
-        "uri": TEST_FILE_URI,
+        "uri": test_file_uri,
         "diagnostics": [
             {
                 "range": {
@@ -70,15 +70,15 @@ def test_linting():
 
 def test_formatting():
     """Test formatting a snakemake file."""
-    FORMATTED_TEST_FILE_PATH = constants.TEST_DATA / "sample1" / "formatted.smk"
-    UNFORMATTED_TEST_FILE_PATH = constants.TEST_DATA / "sample1" / "toFormat.smk"
+    formatted_test_file_path = constants.TEST_DATA / "sample1" / "formatted.smk"
+    unformatted_test_file_path = constants.TEST_DATA / "sample1" / "toFormat.smk"
 
-    contents = UNFORMATTED_TEST_FILE_PATH.read_text()
+    contents = unformatted_test_file_path.read_text("utf-8")
     lines = contents.splitlines(keepends=False)
 
     actual = []
-    with utils.SnakemakeFile(contents, UNFORMATTED_TEST_FILE_PATH.parent) as f:
-        uri = utils.as_uri(str(f))
+    with utils.SnakemakeFile(contents, unformatted_test_file_path.parent) as file:
+        uri = utils.as_uri(str(file))
 
         with session.LspSession() as ls_session:
             ls_session.initialize()
@@ -105,7 +105,7 @@ def test_formatting():
                 "start": {"line": 0, "character": 0},
                 "end": {"line": len(lines), "character": 0},
             },
-            "newText": FORMATTED_TEST_FILE_PATH.read_text(),
+            "newText": formatted_test_file_path.read_text("utf-8"),
         }
     ]
 
@@ -121,22 +121,22 @@ def test_formatting():
 
 def test_formatting_with_custom_config():
     """Test formatting a snakemake file and providing a custom config file."""
-    FORMATTED_TEST_FILE_PATH = constants.TEST_DATA / "sample2" / "formatted.smk"
-    UNFORMATTED_TEST_FILE_PATH = constants.TEST_DATA / "sample2" / "toFormat.smk"
-    CONFIG_FILE = constants.TEST_DATA / "sample2" / "config.toml"
+    formatted_test_file_path = constants.TEST_DATA / "sample2" / "formatted.smk"
+    unformatted_test_file_path = constants.TEST_DATA / "sample2" / "toFormat.smk"
+    config_file = constants.TEST_DATA / "sample2" / "config.toml"
 
-    contents = UNFORMATTED_TEST_FILE_PATH.read_text()
+    contents = unformatted_test_file_path.read_text("utf-8")
     lines = contents.splitlines(keepends=False)
 
     actual = []
-    with utils.SnakemakeFile(contents, UNFORMATTED_TEST_FILE_PATH.parent) as f:
-        uri = utils.as_uri(str(f))
+    with utils.SnakemakeFile(contents, unformatted_test_file_path.parent) as file:
+        uri = utils.as_uri(str(file))
 
         with session.LspSession() as ls_session:
             init_options = defaults.VSCODE_DEFAULT_INITIALIZE["initializationOptions"]
             init_options["settings"][0]["args"] = [
                 "--config",
-                str(CONFIG_FILE),
+                str(config_file),
             ]
             ls_session.initialize(defaults.VSCODE_DEFAULT_INITIALIZE)
             ls_session.notify_did_open(
@@ -162,7 +162,7 @@ def test_formatting_with_custom_config():
                 "start": {"line": 0, "character": 0},
                 "end": {"line": len(lines), "character": 0},
             },
-            "newText": FORMATTED_TEST_FILE_PATH.read_text(),
+            "newText": formatted_test_file_path.read_text("utf-8"),
         }
     ]
     diff = difflib.unified_diff(
@@ -176,15 +176,15 @@ def test_formatting_with_custom_config():
 
 def test_formatting_with_default_config():
     """Test formatting a snakemake file with a default configuration file in the workspace."""
-    FORMATTED_TEST_FILE_PATH = constants.TEST_DATA / "sample3" / "formatted.smk"
-    UNFORMATTED_TEST_FILE_PATH = constants.TEST_DATA / "sample3" / "toFormat.smk"
+    formatted_test_file_path = constants.TEST_DATA / "sample3" / "formatted.smk"
+    unformatted_test_file_path = constants.TEST_DATA / "sample3" / "toFormat.smk"
 
-    contents = UNFORMATTED_TEST_FILE_PATH.read_text()
+    contents = unformatted_test_file_path.read_text("utf-8")
     lines = contents.splitlines(keepends=False)
 
     actual = []
-    with utils.SnakemakeFile(contents, UNFORMATTED_TEST_FILE_PATH.parent) as f:
-        uri = utils.as_uri(f.fullpath)
+    with utils.SnakemakeFile(contents, unformatted_test_file_path.parent) as file:
+        uri = utils.as_uri(file.fullpath)
 
         with session.LspSession() as ls_session:
             ls_session.initialize()
@@ -211,7 +211,7 @@ def test_formatting_with_default_config():
                 "start": {"line": 0, "character": 0},
                 "end": {"line": len(lines), "character": 0},
             },
-            "newText": FORMATTED_TEST_FILE_PATH.read_text(),
+            "newText": formatted_test_file_path.read_text("utf-8"),
         }
     ]
 
