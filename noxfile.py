@@ -230,14 +230,14 @@ def update_packages(session: nox.Session) -> None:
     _update_readme()
 
 
-def _contains(s, parts=()):
-    return any(p for p in parts if p in s)
+def _contains(string, parts=()):
+    return any(p for p in parts if p in string)
 
 
 def _get_pypi_package_data(package_name):
-    json_uri = "https://pypi.org/pypi/{0}/json".format(package_name)
+    json_uri = f"https://pypi.org/pypi/{package_name}/json"
     # Response format: https://warehouse.readthedocs.io/api-reference/json/#project
-    # Release metadata format: https://github.com/pypa/interoperability-peps/blob/master/pep-0426-core-metadata.rst
+    # Release metadata format: https://github.com/pypa/interoperability-peps/blob/master/pep-0426-core-metadata.rst # pylint: disable=line-too-long
     with url_lib.urlopen(json_uri) as response:
         return json.loads(response.read())
 
@@ -248,7 +248,7 @@ def _get_wheel_urls(data, version):
     )
 
 
-def _download_and_extract(root, url, version):
+def _download_and_extract(root, url):
     root = os.getcwd() if root is None or root == "." else root
     print(url)
     with url_lib.urlopen(url) as response:
@@ -273,4 +273,4 @@ def _install_wheels(root, package_name, version="latest"):
         use_version = version
 
     for url in _get_wheel_urls(data, use_version):
-        _download_and_extract(root, url, use_version)
+        _download_and_extract(root, url)
