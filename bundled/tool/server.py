@@ -100,11 +100,15 @@ def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
     # Publishing empty diagnostics to clear the entries for this file.
     LSP_SERVER.publish_diagnostics(document.uri, [])
 
-def slugify(s):
-    """Convert camel case to slug case."""
-    return re.sub(r"(?<!^)(?=[A-Z])", "-", s).lower()
 
-def parse_formatting_error(error: str, document: workspace.Document) -> list[lsp.Diagnostic]:
+def slugify(string: str) -> str:
+    """Convert camel case to slug case."""
+    return re.sub(r"(?<!^)(?=[A-Z])", "-", string).lower()
+
+
+def parse_formatting_error(
+    error: str, document: workspace.Document
+) -> list[lsp.Diagnostic]:
     """Parse formatting error from snakefmt output and return a list of diagnostics."""
     error_message_match = re.match(r'\[ERROR\] In file ".+":  (.+)\n', error)
     if error_message_match:
@@ -114,8 +118,10 @@ def parse_formatting_error(error: str, document: workspace.Document) -> list[lsp
             # try to find line number
             line_match = re.match(r"Cannot parse: (\d+)", error_message, re.UNICODE)
             if line_match:
-                line_number = int(line_match.group(1))-1
-                line_start = len(re.match(r"\s*", document.lines[line_number], re.UNICODE).group(0))
+                line_number = int(line_match.group(1)) - 1
+                line_start = len(
+                    re.match(r"\s*", document.lines[line_number], re.UNICODE).group(0)
+                )
                 line_end = len(document.lines[line_number])
                 return [
                     lsp.Diagnostic(
@@ -129,14 +135,16 @@ def parse_formatting_error(error: str, document: workspace.Document) -> list[lsp
                         source=TOOL_DISPLAY,
                     )
                 ]
-        
+
         # determine line number
         # snakefmt uses a format like "ExceptionName: (L?)X"
         serr_result = re.match(r"(\w+): L?(\d+):?", error_message)
         if serr_result:
             exception_name = serr_result.group(1)
             line_number = int(serr_result.group(2)) - 1
-            line_start = len(re.match(r"\s*", document.lines[line_number], re.UNICODE).group(0))
+            line_start = len(
+                re.match(r"\s*", document.lines[line_number], re.UNICODE).group(0)
+            )
             line_end = len(document.lines[line_number])
             return [
                 lsp.Diagnostic(
@@ -150,17 +158,18 @@ def parse_formatting_error(error: str, document: workspace.Document) -> list[lsp
                     source=TOOL_MODULE,
                 )
             ]
-    return [lsp.Diagnostic(
-                    range=lsp.Range(
-                        start=lsp.Position(line=0, character=0),
-                        end=lsp.Position(line=0, character=0),
-                    ),
-                    message="An unexpected error occurred, snakfmt could not format this document.",
-                    severity=lsp.DiagnosticSeverity.Warning,
-                    code="snakefmt:unexpected-error",
-                    source=TOOL_MODULE,
-                )]
-
+    return [
+        lsp.Diagnostic(
+            range=lsp.Range(
+                start=lsp.Position(line=0, character=0),
+                end=lsp.Position(line=0, character=0),
+            ),
+            message="An unexpected error occurred, snakfmt could not format this document.",
+            severity=lsp.DiagnosticSeverity.Warning,
+            code="snakefmt:unexpected-error",
+            source=TOOL_MODULE,
+        )
+    ]
 
 
 def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
@@ -178,7 +187,6 @@ def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
             )
         else:
             return parse_formatting_error(result.stderr, document)
-
 
         rng = lsp.Range(
             start=lsp.Position(line=0, character=0),
