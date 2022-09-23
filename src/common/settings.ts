@@ -11,6 +11,7 @@ export interface ISettings {
     logLevel: LoggingLevelSettingType;
     config: string;
     disableLinting: boolean;
+    enablePythonLinting: boolean;
     args: string[];
     path: string[];
     executable: string;
@@ -57,6 +58,7 @@ export async function getWorkspaceSettings(
         args: config.get<string[]>(`args`) ?? [],
         config: config.get<string>(`config`) ?? '',
         disableLinting: config.get<boolean>(`disableLinting`) ?? false,
+        enablePythonLinting: config.get<boolean>(`enablePythonLinting`) ?? false,
         path: config.get<string[]>(`path`) ?? [],
         executable: config.get<string>(`executable`) ?? '',
         interpreter: interpreter ?? [],
@@ -72,6 +74,7 @@ export function checkIfConfigurationChanged(e: ConfigurationChangeEvent, namespa
         `${namespace}.args`,
         `${namespace}.config`,
         `${namespace}.disableLinting`,
+        `${namespace}.enablePythonLinting`,
         `${namespace}.path`,
         `${namespace}.executable`,
         `${namespace}.interpreter`,

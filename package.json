@@ -2,7 +2,7 @@
     "name": "snakefmt",
     "displayName": "Snakefmt",
     "description": "Linting and formatting support for snakemake files using `snakefmt`.",
-    "version": "0.2.2",
+    "version": "0.3.0",
     "preview": false,
     "serverInfo": {
         "name": "Snakefmt",
@@ -80,6 +80,12 @@
                 "snakefmt.disableLinting": {
                     "default": false,
                     "description": "Disable linting of snakemake files",
+                    "scope": "resource",
+                    "type": "boolean"
+                },
+                "snakefmt.enablePythonLinting": {
+                    "default": false,
+                    "description": "Enable linting with `snakefmt` on `Python` files",
                     "scope": "resource",
                     "type": "boolean"
                 },

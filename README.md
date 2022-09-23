@@ -5,9 +5,9 @@ The bundled `snakefmt` is used if no `path` to the executable or `interpreter` i
 
 ## Features
 
-This extensions uses `snakefmt` to format your `Snakemake` code. 
+This extensions uses `snakefmt` to format your `Snakemake` code. It can also supports formatting `Python` code.
 It automatically checks if your Snakemake file is formatted according to `snakefmt`.
-You can disable this feature by setting `snakefmt.disableLinting = true`.
+You can disable this feature by setting `snakefmt.disableLinting = true`. This feature is disabled per default for `Python` files and can be enabled with `snakefmt.enablePythonLinting = true`.
 
 Files or code chunks can be formatted on-demand by right clicking in the document and
 selecting "Format Document", or by using the associated keyboard shortcut
@@ -26,10 +26,11 @@ vscode settings.json file:
 
 | Settings                         | Default      | Description                                                                                                                                                                                                                                                              |
 | -------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| snakefmt.args             | `[]`         | Custom arguments passed to `snakefmt`. E.g `"snakefmt.args" = ["--config", "<file>"]`                                                                                                                                                                                |
-| snakefmt.config           | `""`         | Snakefmt config file. Deprecated. Use `snakefmt.args` instead. Usage `"snakefmt.config" = "<file>"`                                                                                                                                                                                |
-| snakefmt.disableLinting   | `false`         | Disable linting of snakemake files`                                                                                                                                                                                |
-| snakefmt.trace            | `error`      | Sets the tracing level for the extension.                                                                                                                                                                                                                                |
+| snakefmt.args             | `[]`         | Custom arguments passed to `snakefmt`. E.g `"snakefmt.args" = ["--config", "<file>"]` |
+| snakefmt.config           | `""`         | Snakefmt config file. Deprecated. Use `snakefmt.args` instead. Usage `"snakefmt.config" = "<file>"` |
+| snakefmt.disableLinting   | `false`         | Disable linting of snakemake files. |
+| snakefmt.enablePythonLinting   | `false`    | Enable linting of python files with `snakefmt`. |
+| snakefmt.trace            | `error`      | Sets the tracing level for the extension. |
 | snakefmt.path             | `[]`         | Setting to provide custom `snakefmt` executable. Example 1: `["~/global_env/snakefmt"]` Example 2: `["conda", "run", "-n", "fmt_env", "--no-capture-output", "snakefmt"]` |
 | snakefmt.executable       | `""`         | Alias for `snakefmt.path`. Deprecated. Use `snakefmt.path` instead. |
 | snakefmt.interpreter      | `[]`         | Path to a python interpreter to use to run the formatter server.                                                                                                                                                                                                            |
@@ -47,6 +48,9 @@ Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider
 
 
 ## Release Notes
+
+### 0.3.0
+- Support Python formatting
 
 ### 0.2.0
 - Add linting support

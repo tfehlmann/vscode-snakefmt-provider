@@ -83,12 +83,14 @@ export async function createServer(
 
     // Options to control the language client
     const clientOptions: LanguageClientOptions = {
-        // Register the server for python documents
+        // Register the server for snakemake and python documents
         documentSelector: isVirtualWorkspace()
-            ? [{ language: 'snakemake' }]
+            ? [{ language: 'snakemake' }, { language: 'python' }]
             : [
                   { scheme: 'file', language: 'snakemake' },
                   { scheme: 'untitled', language: 'snakemake' },
+                  { scheme: 'file', language: 'python' },
+                  { scheme: 'untitled', language: 'python' },
               ],
         outputChannel: outputChannel,
         traceOutputChannel: outputChannel,
