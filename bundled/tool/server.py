@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 import copy
+import difflib
 import json
 import os
 import pathlib
 import re
 import sys
 import traceback
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 
 # **********************************************************
@@ -106,68 +107,112 @@ def slugify(string: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "-", string).lower()
 
 
+def try_handle_black_error(
+    error_message: str, error: str, document: workspace.Document
+) -> Optional[list[lsp.Diagnostic]]:
+    """Try to handle black error."""
+    error_message_match2 = re.search("```\n?(.+)\n?```", error_message)
+    if error_message_match2:
+        black_error_message = error_message_match2.group(1)
+    else:
+        black_error_message = error.splitlines()[2]
+    # try to find line number
+    line_match = re.match(r"Cannot parse: (\d+)", black_error_message, re.UNICODE)
+    if line_match:
+        line_number = int(line_match.group(1)) - 1
+        line_start = len(
+            re.match(r"\s*", document.lines[line_number], re.UNICODE).group(0)
+        )
+        line_end = len(document.lines[line_number])
+        return [
+            lsp.Diagnostic(
+                range=lsp.Range(
+                    start=lsp.Position(line=line_number, character=line_start),
+                    end=lsp.Position(line=line_number, character=line_end),
+                ),
+                message=f"InvalidPython: Black error:\n{black_error_message}",
+                severity=lsp.DiagnosticSeverity.Error,
+                code="snakefmt:black-error:invalid-python",
+                source=TOOL_DISPLAY,
+            )
+        ]
+    return None
+
+
+def try_handle_snakefmt_error(
+    error_message: str, document: workspace.Document
+) -> Optional[list[lsp.Diagnostic]]:
+    """Try to handle snakefmt error."""
+    # snakefmt uses a format like "ExceptionName: (L?)X"
+    serr_result = re.match(r"(\w+): L?(\d+):?(.*)", error_message, re.DOTALL)
+    if not serr_result:
+        return None
+    exception_name = serr_result.group(1)
+    line_number = int(serr_result.group(2)) - 1
+    line_start = len(re.match(r"\s*", document.lines[line_number], re.UNICODE).group(0))
+    line_end = len(document.lines[line_number])
+    end_pos = lsp.Position(line=line_number, character=line_end)
+    code_error = serr_result.group(3).strip()
+    if code_error:
+        # try to find last line affected by error
+        last_code_error_lines = code_error.splitlines()
+        n_err_lines = len(last_code_error_lines)
+        if n_err_lines > 1:
+            for line_num in range(line_number + 1, line_number + n_err_lines + 1):
+                if (
+                    difflib.SequenceMatcher(
+                        lambda x: x == " ",
+                        document.lines[line_num].rstrip(),
+                        last_code_error_lines[-1],
+                    ).ratio()
+                    > 0.9
+                ):
+                    end_pos = lsp.Position(
+                        line=line_num, character=len(document.lines[line_num])
+                    )
+                    break
+
+    return [
+        lsp.Diagnostic(
+            range=lsp.Range(
+                start=lsp.Position(line=line_number, character=line_start),
+                end=end_pos,
+            ),
+            message=error_message,
+            severity=lsp.DiagnosticSeverity.Error,
+            code=f"snakefmt:{slugify(exception_name)}",
+            source=TOOL_DISPLAY,
+        )
+    ]
+
+
 def parse_formatting_error(
     error: str, document: workspace.Document
 ) -> list[lsp.Diagnostic]:
     """Parse formatting error from snakefmt output and return a list of diagnostics."""
-    error_message_match = re.match(r'\[ERROR\] In file ".+":  (.+)\n', error)
+    error_message_match = re.match(
+        r'\[ERROR\] In file ".+":  (.+)[\r\n]+\[INFO', error, re.DOTALL
+    )
     if error_message_match:
-        error_message = error_message_match.group(1)
-        if error_message == "InvalidPython: Black error:":
-            error_message = error.splitlines()[2]
-            # try to find line number
-            line_match = re.match(r"Cannot parse: (\d+)", error_message, re.UNICODE)
-            if line_match:
-                line_number = int(line_match.group(1)) - 1
-                line_start = len(
-                    re.match(r"\s*", document.lines[line_number], re.UNICODE).group(0)
-                )
-                line_end = len(document.lines[line_number])
-                return [
-                    lsp.Diagnostic(
-                        range=lsp.Range(
-                            start=lsp.Position(line=line_number, character=line_start),
-                            end=lsp.Position(line=line_number, character=line_end),
-                        ),
-                        message=f"InvalidPython: Black error:\n{error_message}",
-                        severity=lsp.DiagnosticSeverity.Error,
-                        code="snakefmt:black-error:invalid-python",
-                        source=TOOL_DISPLAY,
-                    )
-                ]
+        error_message = error_message_match.group(1).strip()
+        if error_message.startswith("InvalidPython: Black error:"):
+            black_res = try_handle_black_error(error_message, error, document)
+            if black_res:
+                return black_res
 
-        # determine line number
-        # snakefmt uses a format like "ExceptionName: (L?)X"
-        serr_result = re.match(r"(\w+): L?(\d+):?", error_message)
-        if serr_result:
-            exception_name = serr_result.group(1)
-            line_number = int(serr_result.group(2)) - 1
-            line_start = len(
-                re.match(r"\s*", document.lines[line_number], re.UNICODE).group(0)
-            )
-            line_end = len(document.lines[line_number])
-            return [
-                lsp.Diagnostic(
-                    range=lsp.Range(
-                        start=lsp.Position(line=line_number, character=line_start),
-                        end=lsp.Position(line=line_number, character=line_end),
-                    ),
-                    message=error_message,
-                    severity=lsp.DiagnosticSeverity.Error,
-                    code=f"snakefmt:{slugify(exception_name)}",
-                    source=TOOL_MODULE,
-                )
-            ]
+        res = try_handle_snakefmt_error(error_message, document)
+        if res:
+            return res
     return [
         lsp.Diagnostic(
             range=lsp.Range(
                 start=lsp.Position(line=0, character=0),
                 end=lsp.Position(line=0, character=0),
             ),
-            message="An unexpected error occurred, snakfmt could not format this document.",
+            message="An unexpected error occurred, Snakefmt could not format this document.",
             severity=lsp.DiagnosticSeverity.Warning,
             code="snakefmt:unexpected-error",
-            source=TOOL_MODULE,
+            source=TOOL_DISPLAY,
         )
     ]
 
@@ -201,7 +246,7 @@ def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
                     message="Document is not following snakefmt formatting",
                     severity=lsp.DiagnosticSeverity.Information,
                     code="snakefmt:not-formatted",
-                    source=TOOL_MODULE,
+                    source=TOOL_DISPLAY,
                 )
             ]
         )

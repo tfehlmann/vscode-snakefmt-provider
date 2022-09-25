@@ -13,14 +13,129 @@ from .lsp_test_client import constants, defaults, session, utils
 SERVER_INFO = utils.get_server_info_defaults()
 TIMEOUT = 10  # 10 seconds
 
+LINTING_FILE_EXPECTED = {
+    constants.TEST_DATA
+    / "sample1"
+    / "toFormat.smk": {
+        "diagnostics": [
+            {
+                "range": {
+                    "start": {"line": 0, "character": 0},
+                    "end": {"line": 0, "character": 0},
+                },
+                "message": "Document is not following snakefmt formatting",
+                "severity": 3,
+                "code": "snakefmt:not-formatted",
+                "source": SERVER_INFO["name"],
+            },
+        ],
+    },
+    constants.TEST_DATA
+    / "linting"
+    / "test1.smk": {
+        "diagnostics": [
+            {
+                "range": {
+                    "start": {"line": 10, "character": 0},
+                    "end": {"line": 10, "character": 14},
+                },
+                "message": 'InvalidPython: Black error:\nCannot parse: 11:0: test = "test"',
+                "severity": 1,
+                "code": "snakefmt:black-error:invalid-python",
+                "source": SERVER_INFO["name"],
+            },
+        ],
+    },
+    constants.TEST_DATA
+    / "linting"
+    / "test2.smk": {
+        "diagnostics": [
+            {
+                "range": {
+                    "start": {"line": 13, "character": 0},
+                    "end": {"line": 13, "character": 9},
+                },
+                "message": "InvalidPython: Black error:\nCannot parse: 14:4: rue all:",
+                "severity": 1,
+                "code": "snakefmt:black-error:invalid-python",
+                "source": SERVER_INFO["name"],
+            },
+        ],
+    },
+    constants.TEST_DATA
+    / "linting"
+    / "test3.smk": {
+        "diagnostics": [
+            {
+                "range": {
+                    "start": {"line": 21, "character": 8},
+                    "end": {"line": 22, "character": 64},
+                },
+                "message": 'InvalidParameterSyntax: 22"data/genome.fa"\n'
+                'lambda wildcards: config["samples2"][wildcards.sample]',
+                "severity": 1,
+                "code": "snakefmt:invalid-parameter-syntax",
+                "source": SERVER_INFO["name"],
+            },
+        ],
+    },
+    constants.TEST_DATA
+    / "linting"
+    / "test4.smk": {
+        "diagnostics": [
+            {
+                "range": {
+                    "start": {"line": 22, "character": 4},
+                    "end": {"line": 22, "character": 11},
+                },
+                "message": "SyntaxError: L23: Unrecognised keyword 'outut' in rule definition",
+                "severity": 1,
+                "code": "snakefmt:syntax-error",
+                "source": SERVER_INFO["name"],
+            },
+        ],
+    },
+    constants.TEST_DATA
+    / "linting"
+    / "test5.smk": {
+        "diagnostics": [
+            {
+                "range": {
+                    "start": {"line": 0, "character": 0},
+                    "end": {"line": 0, "character": 0},
+                },
+                "message": "An unexpected error occurred, Snakefmt could not format this document.",
+                "severity": 2,
+                "code": "snakefmt:unexpected-error",
+                "source": SERVER_INFO["name"],
+            },
+        ],
+    },
+    constants.TEST_DATA
+    / "linting"
+    / "test6.smk": {
+        "diagnostics": [
+            {
+                "range": {
+                    "start": {"line": 0, "character": 0},
+                    "end": {"line": 0, "character": 0},
+                },
+                "message": "An unexpected error occurred, Snakefmt could not format this document.",
+                "severity": 2,
+                "code": "snakefmt:unexpected-error",
+                "source": SERVER_INFO["name"],
+            },
+        ],
+    },
+}
 
-def test_linting():
-    """Test to linting on file open."""
-    test_file_path = constants.TEST_DATA / "sample1" / "toFormat.smk"
+
+def lint_file(test_file_path):
+    """Lint a file and return the diagnostics."""
     test_file_uri = utils.as_uri(str(test_file_path))
     contents = test_file_path.read_text()
 
-    actual = []
+    actual = {}
 
     with session.LspSession() as ls_session:
         ls_session.initialize(defaults.VSCODE_DEFAULT_INITIALIZE)
@@ -48,23 +163,17 @@ def test_linting():
         # wait for some time to receive all notifications
         done.wait(TIMEOUT)
 
-    expected = {
-        "uri": test_file_uri,
-        "diagnostics": [
-            {
-                "range": {
-                    "start": {"line": 0, "character": 0},
-                    "end": {"line": 0, "character": 0},
-                },
-                "message": "Document is not following snakefmt formatting",
-                "severity": 3,
-                "code": "snakefmt:not-formatted",
-                "source": SERVER_INFO["module"],
-            },
-        ],
-    }
+    return actual
 
-    assert_that(actual, is_(expected))
+
+def test_linting():
+    """Test linting on file open."""
+    for file_path, expected in LINTING_FILE_EXPECTED.items():
+        actual = lint_file(file_path)
+        for actual_diag, expected_diag in zip(
+            actual["diagnostics"], expected["diagnostics"]
+        ):
+            assert actual_diag == expected_diag
 
 
 def test_formatting():

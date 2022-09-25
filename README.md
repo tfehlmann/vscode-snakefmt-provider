@@ -48,9 +48,12 @@ Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider
 
 
 ## Release Notes
+### 0.4.0
+- Publish 0.3.0 preview release
 
-### 0.3.0
+### 0.3.0 (preview release)
 - Support Python formatting
+- Add better linting messages and error highlighting
 
 ### 0.2.0
 - Add linting support
