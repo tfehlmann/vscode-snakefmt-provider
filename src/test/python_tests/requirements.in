@@ -12,4 +12,5 @@
 pytest
 PyHamcrest
 python-jsonrpc-server
-colorama==0.4.5
+colorama==0.4.6
+importlib-metadata==5.0.0
