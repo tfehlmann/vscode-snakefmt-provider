@@ -1,6 +1,6 @@
 # Snakefmt extension for Visual Studio Code
 
-A [Visual Studio Code](https://code.visualstudio.com/) extension that formats [Snakemake](https://snakemake.readthedocs.io/) code using [Snakefmt](https://github.com/snakemake/snakefmt). The extension ships with `snakefmt=0.6.1`. 
+A [Visual Studio Code](https://code.visualstudio.com/) extension that formats [Snakemake](https://snakemake.readthedocs.io/) code using [Snakefmt](https://github.com/snakemake/snakefmt). The extension ships with `snakefmt=0.7.0`. 
 The bundled `snakefmt` is used if no `path` to the executable or `interpreter` is specified.
 
 ## Features
@@ -51,6 +51,7 @@ Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider
 
 ### 0.4.1
 - Add support for Python 3.11
+- Update bundled `snakefmt` to `0.7.0`
 ### 0.4.0
 - Integrate 0.3.0 preview release features
 - Improve linting messages
