@@ -49,9 +49,10 @@ Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider
 
 ## Release Notes
 
-### 0.4.1
+### 0.5.0 (preview release)
 - Add support for Python 3.11
 - Update bundled `snakefmt` to `0.7.0`
+
 ### 0.4.0
 - Integrate 0.3.0 preview release features
 - Improve linting messages
