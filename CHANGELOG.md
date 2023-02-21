@@ -1,5 +1,8 @@
 # Change Log
 
+### 0.6.0
+- Update bundled `snakefmt` to `0.8.1`
+
 ### 0.5.0 (preview release)
 - Add support for Python 3.11
 - Update bundled `snakefmt` to `0.7.0`
