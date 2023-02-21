@@ -21,6 +21,7 @@ import {
 import { loadServerDefaults } from './common/setup';
 import { createOutputChannel, onDidChangeConfiguration, registerCommand } from './common/vscodeapi';
 import { getProjectRoot } from './common/utilities';
+import { registerEmptyFormatter } from './common/nullFormatter';
 
 let lsClient: LanguageClient | undefined;
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
@@ -35,7 +36,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     // Setup logging
     const outputChannel = createOutputChannel(serverName);
     context.subscriptions.push(outputChannel);
-    setLoggingLevel(settings[0].logLevel);
+    setLoggingLevel(settings.length > 0 ? settings[0].logLevel : undefined);
     context.subscriptions.push(registerLogger(new OutputChannelLogger(outputChannel)));
 
     traceLog(`Name: ${serverName}`);
@@ -74,6 +75,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         }),
     );
 
+    registerEmptyFormatter();
+
     setImmediate(async () => {
         const interpreter = getInterpreterFromSetting(serverId);
         if (interpreter === undefined || interpreter.length === 0) {
@@ -84,4 +87,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             await runServer();
         }
     });
+}
+
+export async function deactivate(): Promise<void> {
+    if (lsClient) {
+        await lsClient.stop();
+    }
 }

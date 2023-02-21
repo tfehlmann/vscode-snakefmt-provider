@@ -132,7 +132,6 @@ class ProcessManager:
         self._lock = threading.Lock()
         self._thread_pool = ThreadPoolExecutor(10)
 
-    @atexit.register
     def stop_all_processes(self):
         """Send exit command to all processes and shutdown transport."""
         for i in self._rpc.values():
@@ -175,6 +174,7 @@ class ProcessManager:
 
 
 _process_manager = ProcessManager()
+atexit.register(_process_manager.stop_all_processes)
 
 
 def _get_json_rpc(workspace: str) -> Union[JsonRpc, None]:
@@ -221,6 +221,7 @@ def run_over_json_rpc(
     """Uses JSON-RPC to execute a command."""
     rpc: Union[JsonRpc, None] = get_or_start_json_rpc(workspace, interpreter, cwd)
     if not rpc:
+        # pylint: disable=broad-exception-raised
         raise Exception("Failed to run over JSON-RPC.")
 
     msg_id = str(uuid.uuid4())

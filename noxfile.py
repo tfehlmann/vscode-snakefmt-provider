@@ -36,6 +36,7 @@ def _check_files(names: List[str]) -> None:
         file_path = root_dir / name
         lines: List[str] = file_path.read_text().splitlines()
         if any(line for line in lines if line.startswith("# TODO:")):
+            # pylint: disable=broad-exception-raised
             raise Exception(f"Please update {os.fspath(file_path)}.")
 
 
@@ -118,7 +119,7 @@ def setup(session: nox.Session) -> None:
 def tests(session: nox.Session) -> None:
     """Runs all the tests for the extension."""
     session.install("-r", "src/test/python_tests/requirements.txt")
-    session.run("pytest", "src/test/python_tests")
+    session.run("pytest", "src/test/python_tests", "-s")
 
 
 @nox.session()

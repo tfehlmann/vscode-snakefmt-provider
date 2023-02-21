@@ -2,7 +2,6 @@
 Test for path and interpreter settings.
 """
 import copy
-from threading import Event
 from typing import Dict
 
 from hamcrest import assert_that, is_
@@ -48,13 +47,6 @@ def test_path():
             argv_callback_object.check_for_argv_duplication,
         )
 
-        done = Event()
-
-        def _handler(_params):
-            done.set()
-
-        ls_session.set_notification_callback(session.PUBLISH_DIAGNOSTICS, _handler)
-
         ls_session.initialize(init_params)
         ls_session.notify_did_open(
             {
@@ -67,10 +59,6 @@ def test_path():
             }
         )
 
-        # wait for some time to receive all notifications
-        done.wait(TIMEOUT)
-        done.clear()
-
         # Call this second time to detect arg duplication.
         ls_session.notify_did_open(
             {
@@ -82,9 +70,6 @@ def test_path():
                 }
             }
         )
-
-        # wait for some time to receive all notifications
-        done.wait(TIMEOUT)
 
         actual = argv_callback_object.check_result()
 
@@ -106,13 +91,6 @@ def test_interpreter():
             argv_callback_object.check_for_argv_duplication,
         )
 
-        done = Event()
-
-        def _handler(_params):
-            done.set()
-
-        ls_session.set_notification_callback(session.PUBLISH_DIAGNOSTICS, _handler)
-
         ls_session.initialize(init_params)
         ls_session.notify_did_open(
             {
@@ -125,10 +103,6 @@ def test_interpreter():
             }
         )
 
-        # wait for some time to receive all notifications
-        done.wait(TIMEOUT)
-        done.clear()
-
         # Call this second time to detect arg duplication.
         ls_session.notify_did_open(
             {
@@ -140,9 +114,6 @@ def test_interpreter():
                 }
             }
         )
-
-        # wait for some time to receive all notifications
-        done.wait(TIMEOUT)
 
         actual = argv_callback_object.check_result()
 
