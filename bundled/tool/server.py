@@ -37,14 +37,15 @@ update_sys_path(
 # **********************************************************
 # pylint: disable=wrong-import-position,import-error
 import jsonrpc
+import lsprotocol.types as lsp
 import utils
-from pygls import lsp, protocol, server, uris, workspace
+from pygls import protocol, server, uris, workspace
 
 WORKSPACE_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "runner.py"
 
 MAX_WORKERS = 5
-LSP_SERVER = server.LanguageServer(max_workers=MAX_WORKERS)
+LSP_SERVER = server.LanguageServer(name="snakefmt-server", version="0.1.0", max_workers=MAX_WORKERS)
 
 
 # **********************************************************
@@ -269,7 +270,7 @@ def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
 #  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/tool
 
 
-@LSP_SERVER.feature(lsp.FORMATTING)
+@LSP_SERVER.feature(lsp.TEXT_DOCUMENT_FORMATTING)
 def formatting(params: lsp.DocumentFormattingParams) -> list[lsp.TextEdit] | None:
     """LSP handler for textDocument/formatting request."""
     document = LSP_SERVER.workspace.get_document(params.text_document.uri)
@@ -341,19 +342,24 @@ def initialize(params: lsp.InitializeParams) -> None:
 
     if isinstance(LSP_SERVER.lsp, protocol.LanguageServerProtocol):
         if any(setting["logLevel"] == "debug" for setting in settings):
-            LSP_SERVER.lsp.trace = lsp.Trace.Verbose
+            LSP_SERVER.lsp.trace = lsp.TraceValues.Verbose
         elif any(
             setting["logLevel"] in ["error", "warn", "info"] for setting in settings
         ):
-            LSP_SERVER.lsp.trace = lsp.Trace.Messages
+            LSP_SERVER.lsp.trace = lsp.TraceValues.Messages
         else:
-            LSP_SERVER.lsp.trace = lsp.Trace.Off
+            LSP_SERVER.lsp.trace = lsp.TraceValues.Off
     _log_version_info()
 
 
 @LSP_SERVER.feature(lsp.EXIT)
-def on_exit():
+def on_exit(_params: Optional[Any] = None) -> None:
     """Handle clean up on exit."""
+    jsonrpc.shutdown_json_rpc()
+
+@LSP_SERVER.feature(lsp.SHUTDOWN)
+def on_shutdown(_params: Optional[Any] = None) -> None:
+    """Handle clean up on shutdown."""
     jsonrpc.shutdown_json_rpc()
 
 
@@ -398,6 +404,20 @@ def _log_version_info() -> None:
 # Internal functional and settings management APIs.
 # *****************************************************
 def _update_workspace_settings(settings):
+    if not settings:
+        key = os.getcwd()
+        WORKSPACE_SETTINGS[key] = {
+            "workspaceFS": key,
+            "workspace": uris.from_fs_path(key),
+            "logLevel": "error",
+            "path": [],
+            "interpreter": [sys.executable],
+            "args": [],
+            "importStrategy": "useBundled",
+            "showNotifications": "off",
+        }
+        return
+
     for setting in settings:
         key = uris.to_fs_path(setting["workspace"])
         WORKSPACE_SETTINGS[key] = {
@@ -406,20 +426,36 @@ def _update_workspace_settings(settings):
         }
 
 
-def _get_settings_by_document(document: workspace.Document | None):
-    if len(WORKSPACE_SETTINGS) == 1 or document is None or document.path is None:
-        return list(WORKSPACE_SETTINGS.values())[0]
-
+def _get_document_key(document: workspace.Document):
     document_workspace = pathlib.Path(document.path)
     workspaces = {s["workspaceFS"] for s in WORKSPACE_SETTINGS.values()}
 
-    # COMMENT: about non workspace files
     while document_workspace != document_workspace.parent:
         if str(document_workspace) in workspaces:
-            break
+            return str(document_workspace)
         document_workspace = document_workspace.parent
+    return None
 
-    return WORKSPACE_SETTINGS[str(document_workspace)]
+
+def _get_settings_by_document(document: workspace.Document | None):
+    if document is None or document.path is None:
+        return list(WORKSPACE_SETTINGS.values())[0]
+
+    key = _get_document_key(document)
+    if key is None:
+        key = os.fspath(pathlib.Path(document.path).parent)
+        return {
+            "workspaceFS": key,
+            "workspace": uris.from_fs_path(key),
+            "logLevel": "error",
+            "path": [],
+            "interpreter": [sys.executable],
+            "args": [],
+            "importStrategy": "useBundled",
+            "showNotifications": "off",
+        }
+
+    return WORKSPACE_SETTINGS[str(key)]
 
 
 # *****************************************************
@@ -602,7 +638,7 @@ def _run_tool(extra_args: Sequence[str], settings: Dict[str, Any]) -> utils.RunR
         if result.stderr:
             log_to_output(result.stderr)
 
-    if LSP_SERVER.lsp.trace == lsp.Trace.Verbose:
+    if LSP_SERVER.lsp.trace == lsp.TraceValues.Verbose:
         log_to_output(f"\r\n{result.stdout}\r\n")
 
     return result
