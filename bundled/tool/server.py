@@ -45,7 +45,9 @@ WORKSPACE_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "runner.py"
 
 MAX_WORKERS = 5
-LSP_SERVER = server.LanguageServer(name="snakefmt-server", version="0.1.0", max_workers=MAX_WORKERS)
+LSP_SERVER = server.LanguageServer(
+    name="snakefmt-server", version="0.1.0", max_workers=MAX_WORKERS
+)
 
 
 # **********************************************************
@@ -356,6 +358,7 @@ def initialize(params: lsp.InitializeParams) -> None:
 def on_exit(_params: Optional[Any] = None) -> None:
     """Handle clean up on exit."""
     jsonrpc.shutdown_json_rpc()
+
 
 @LSP_SERVER.feature(lsp.SHUTDOWN)
 def on_shutdown(_params: Optional[Any] = None) -> None:
