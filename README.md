@@ -30,7 +30,6 @@ vscode settings.json file:
 | snakefmt.config           | `""`         | Snakefmt config file. Deprecated. Use `snakefmt.args` instead. Usage `"snakefmt.config" = "<file>"` |
 | snakefmt.disableLinting   | `false`         | Disable linting of snakemake files. |
 | snakefmt.enablePythonLinting   | `false`    | Enable linting of python files with `snakefmt`. |
-| snakefmt.trace            | `error`      | Sets the tracing level for the extension. |
 | snakefmt.path             | `[]`         | Setting to provide custom `snakefmt` executable. Example 1: `["~/global_env/snakefmt"]` Example 2: `["conda", "run", "-n", "fmt_env", "--no-capture-output", "snakefmt"]` |
 | snakefmt.executable       | `""`         | Alias for `snakefmt.path`. Deprecated. Use `snakefmt.path` instead. |
 | snakefmt.interpreter      | `[]`         | Path to a python interpreter to use to run the formatter server.                                                                                                                                                                                                            |
@@ -42,6 +41,15 @@ vscode settings.json file:
 | Command                  | Description                       |
 | ------------------------ | --------------------------------- |
 | Snakefmt: Restart server | Force re-start the format server. |
+
+## Logging
+
+From the Command Palette (**View** > **Command Palette ...**), run the **Developer: Set Log Level...** command. Select **Snakefmt** from the **Extension logs** group. Then select the log level you want to set.
+
+Alternatively, you can set the `snakefmt.trace.server` setting to `verbose` to get more detailed logs from the Snakefmt server. This can be helpful when filing bug reports.
+
+To open the logs, click on the language status icon (`{}`) on the bottom right of the Status bar, next to the Python language mode. Locate the **Snakefmt** entry and select **Open logs**.
+
 
 ## Source code
 Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider

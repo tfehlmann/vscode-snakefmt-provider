@@ -6,11 +6,12 @@ from __future__ import annotations
 import contextlib
 import io
 import os
-import os.path
+import pathlib
 import runpy
 import site
 import subprocess
 import sys
+import sysconfig
 import threading
 from typing import Any, Callable, List, Sequence, Tuple, Union
 
@@ -19,37 +20,26 @@ SERVER_CWD = os.getcwd()
 CWD_LOCK = threading.Lock()
 
 
-def as_list(content: Union[Any, List[Any], Tuple[Any]]) -> Union[List[Any], Tuple[Any]]:
+def as_list(content: Union[Any, List[Any], Tuple[Any]]) -> List[Any]:
     """Ensures we always get a list"""
     if isinstance(content, (list, tuple)):
-        return content
+        return list(content)
     return [content]
 
 
-# pylint: disable-next=consider-using-generator
-_site_paths = tuple(
-    [
-        os.path.normcase(os.path.normpath(p))
-        for p in (as_list(site.getsitepackages()) + as_list(site.getusersitepackages()))
-    ]
-)
-
-
-def is_same_path(file_path1, file_path2) -> bool:
+def is_same_path(file_path1: str, file_path2: str) -> bool:
     """Returns true if two paths are the same."""
-    return os.path.normcase(os.path.normpath(file_path1)) == os.path.normcase(
-        os.path.normpath(file_path2)
-    )
+    return pathlib.Path(file_path1) == pathlib.Path(file_path2)
+
+
+def normalize_path(file_path: str) -> str:
+    """Returns normalized path."""
+    return str(pathlib.Path(file_path).resolve())
 
 
 def is_current_interpreter(executable) -> bool:
     """Returns true if the executable path is same as the current interpreter."""
     return is_same_path(executable, sys.executable)
-
-
-def is_stdlib_file(file_path) -> bool:
-    """Return True if the file belongs to standard library."""
-    return os.path.normcase(os.path.normpath(file_path)).startswith(_site_paths)
 
 
 # pylint: disable-next=too-few-public-methods

@@ -2,7 +2,7 @@
     "name": "snakefmt",
     "displayName": "Snakefmt",
     "description": "Linting and formatting support for snakemake files using `snakefmt`.",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "preview": true,
     "serverInfo": {
         "name": "Snakefmt",
@@ -29,7 +29,7 @@
         "formatting"
     ],
     "engines": {
-        "vscode": "^1.72.0"
+        "vscode": "^1.74.0"
     },
     "categories": [
         "Programming Languages",
@@ -40,6 +40,12 @@
         "ms-python.python",
         "snakemake.snakemake-lang"
     ],
+    "capabilities": {
+        "virtualWorkspaces": {
+            "supported": false,
+            "description": "Virtual Workspaces are not supported with Snakefmt."
+        }
+    },
     "activationEvents": [
         "onLanguage:snakemake",
         "onCommand:snakefmt.restart",
@@ -64,19 +70,6 @@
     "contributes": {
         "configuration": {
             "properties": {
-                "snakefmt.logLevel": {
-                    "default": "error",
-                    "description": "The log level the extension logs at, defaults to 'error'",
-                    "enum": [
-                        "debug",
-                        "error",
-                        "info",
-                        "off",
-                        "warn"
-                    ],
-                    "scope": "window",
-                    "type": "string"
-                },
                 "snakefmt.disableLinting": {
                     "default": false,
                     "description": "Disable linting of snakemake files",
@@ -171,24 +164,25 @@
         ]
     },
     "dependencies": {
-        "fs-extra": "^11.1.0",
-        "vscode-languageclient": "7.0.0"
+        "@vscode/python-extension": "^1.0.5",
+        "fs-extra": "^11.1.1",
+        "vscode-languageclient": "^8.1.0"
     },
     "devDependencies": {
-        "@types/fs-extra": "^11.0.1",
-        "@types/vscode": "^1.72.0",
-        "@types/glob": "^8.0.1",
-        "@types/node": "14.x",
-        "@typescript-eslint/eslint-plugin": "^5.53.0",
-        "@typescript-eslint/parser": "^5.53.0",
-        "@vscode/test-electron": "^2.2.3",
-        "eslint": "^8.34.0",
-        "glob": "^8.1.0",
-        "prettier": "^2.8.4",
-        "typescript": "^4.9.5",
-        "ts-loader": "^9.4.2",
-        "webpack": "^5.75.0",
-        "webpack-cli": "^5.0.1",
-        "vsce": "^2.15.0"
+        "@types/fs-extra": "^11.0.3",
+        "@types/glob": "^8.1.0",
+        "@types/node": "16.x",
+        "@types/vscode": "^1.74.0",
+        "@typescript-eslint/eslint-plugin": "^6.9.1",
+        "@typescript-eslint/parser": "^6.9.1",
+        "@vscode/test-electron": "^2.3.6",
+        "@vscode/vsce": "^2.22.0",
+        "eslint": "^8.52.0",
+        "glob": "^10.3.10",
+        "prettier": "^3.0.3",
+        "ts-loader": "^9.5.0",
+        "typescript": "^5.2.2",
+        "webpack": "^5.89.0",
+        "webpack-cli": "^5.1.4"
     }
 }
