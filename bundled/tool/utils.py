@@ -8,10 +8,8 @@ import io
 import os
 import pathlib
 import runpy
-import site
 import subprocess
 import sys
-import sysconfig
 import threading
 from typing import Any, Callable, List, Sequence, Tuple, Union
 

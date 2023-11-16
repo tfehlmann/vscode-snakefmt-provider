@@ -1,4 +1,8 @@
 # Change Log
+### 0.7.0 (preview release)
+- Update bundled `snakefmt` to `0.8.5`
+- Fix "There is no formatter for Snakemake files installed" error
+- Remove logging setting, switch to VSCode integrated log level
 
 ### 0.6.0
 - Update bundled `snakefmt` to `0.8.1`

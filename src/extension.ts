@@ -11,9 +11,7 @@ import {
     getExtensionSettings,
     getInterpreterFromSetting,
     getWorkspaceSettings,
-    ISettings,
-    logDefaultFormatter,
-    logLegacySettings,
+    ISettings
 } from './common/settings';
 import { loadServerDefaults } from './common/setup';
 import { createOutputChannel, onDidChangeConfiguration, registerCommand } from './common/vscodeapi';

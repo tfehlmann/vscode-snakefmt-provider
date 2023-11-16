@@ -8,7 +8,7 @@ import pathlib
 import re
 import urllib.request as url_lib
 import zipfile
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 import nox  # pylint: disable=import-error
 

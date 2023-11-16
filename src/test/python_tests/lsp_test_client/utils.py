@@ -72,5 +72,3 @@ def get_initialization_options():
     setting["cwd"] = str(PROJECT_ROOT)
 
     return {"settings": [setting], "globalSettings": setting}
-
-

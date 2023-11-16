@@ -5,6 +5,7 @@ import { ConfigurationChangeEvent, ConfigurationScope, WorkspaceConfiguration, W
 import { getInterpreterDetails } from './python';
 import { getConfiguration, getWorkspaceFolders } from './vscodeapi';
 import { traceInfo, traceLog, traceWarn } from './logging';
+import { get } from 'http';
 
 
 export interface ISettings {
@@ -117,7 +118,7 @@ export async function getWorkspaceSettings(
         disableLinting: config.get<boolean>(`disableLinting`, false),
         enablePythonLinting: config.get<boolean>(`enablePythonLinting`, false),
         path: resolveVariables(config.get<string[]>('path', []), workspace, interpreter),
-        executable: config.get<string>(`executable`) ?? '',
+        executable: config.get<string>(`executable`, ''),
         interpreter: resolveVariables(interpreter, workspace),
         importStrategy: config.get<string>('importStrategy', 'useBundled'),
         showNotifications: config.get<string>('showNotifications', 'off'),
@@ -149,6 +150,10 @@ export async function getGlobalSettings(namespace: string, includeInterpreter?: 
         interpreter: interpreter ?? [],
         importStrategy: getGlobalValue<string>(config, 'importStrategy') ?? 'useBundled',
         showNotifications: getGlobalValue<string>(config, 'showNotifications') ?? 'off',
+        config: getGlobalValue<string>(config, 'config') ?? '',
+        disableLinting: getGlobalValue<boolean>(config, 'disableLinting') ?? false,
+        enablePythonLinting: getGlobalValue<boolean>(config, 'enablePythonLinting') ?? false,
+        executable: getGlobalValue<string>(config, 'executable') ?? '',
     };
     return setting;
 }

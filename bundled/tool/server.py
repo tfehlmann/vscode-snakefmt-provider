@@ -10,6 +10,7 @@ import os
 import pathlib
 import re
 import sys
+import sysconfig
 import traceback
 from typing import Any, Dict, Optional, Sequence
 
@@ -63,7 +64,7 @@ update_environ_path()
 import jsonrpc
 import lsprotocol.types as lsp
 import utils
-from pygls import protocol, server, uris, workspace
+from pygls import server, uris, workspace
 
 WORKSPACE_SETTINGS = {}
 GLOBAL_SETTINGS = {}
@@ -372,15 +373,6 @@ def initialize(params: lsp.InitializeParams) -> None:
     paths = "\r\n   ".join(sys.path)
     log_to_output(f"sys.path used to run Server:\r\n   {paths}")
 
-    if isinstance(LSP_SERVER.lsp, protocol.LanguageServerProtocol):
-        if any(setting["logLevel"] == "debug" for setting in settings):
-            LSP_SERVER.lsp.trace = lsp.TraceValues.Verbose
-        elif any(
-            setting["logLevel"] in ["error", "warn", "info"] for setting in settings
-        ):
-            LSP_SERVER.lsp.trace = lsp.TraceValues.Messages
-        else:
-            LSP_SERVER.lsp.trace = lsp.TraceValues.Off
     _log_version_info()
 
 
@@ -411,21 +403,21 @@ def _log_version_info() -> None:
             # This is text we get from running `snakefmt --version`
             # snakefmt, version 0.6.1 <--- This is the version we want.
             first_line = result.stdout.splitlines(keepends=False)[0]
-            actual_version = first_line.split(" ")[-1]
+            current_version = first_line.split(" ")[-1]
 
-            version = parse_version(actual_version)
+            version = parse_version(current_version)
             min_version = parse_version(MIN_VERSION)
 
             if version < min_version:
                 log_error(
                     f"Version of formatter running for {code_workspace} is NOT supported:\r\n"
                     f"SUPPORTED {TOOL_MODULE}>={min_version}\r\n"
-                    f"FOUND {TOOL_MODULE}=={actual_version}\r\n"
+                    f"FOUND {TOOL_MODULE}=={current_version}\r\n"
                 )
             else:
                 log_to_output(
                     f"SUPPORTED {TOOL_MODULE}>={min_version}\r\n"
-                    f"FOUND {TOOL_MODULE}=={actual_version}\r\n"
+                    f"FOUND {TOOL_MODULE}=={current_version}\r\n"
                 )
         except:  # pylint: disable=bare-except
             log_to_output(
@@ -443,7 +435,10 @@ def _get_global_defaults():
         "args": GLOBAL_SETTINGS.get("args", []),
         "importStrategy": GLOBAL_SETTINGS.get("importStrategy", "useBundled"),
         "showNotifications": GLOBAL_SETTINGS.get("showNotifications", "off"),
-        "loglevel: GLOBAL_SETTINGS.get("loglevel", "error")
+        "disableLinting": GLOBAL_SETTINGS.get("disableLinting", False),
+        "enablePythonLinting": GLOBAL_SETTINGS.get("enablePythonLinting", True),
+        "config": GLOBAL_SETTINGS.get("config", ""),
+        "executable": GLOBAL_SETTINGS.get("executable", ""),
     }
 
 
