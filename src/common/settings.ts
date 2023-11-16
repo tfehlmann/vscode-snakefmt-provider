@@ -7,7 +7,6 @@ import { getConfiguration, getWorkspaceFolders } from './vscodeapi';
 import { traceInfo, traceLog, traceWarn } from './logging';
 import { get } from 'http';
 
-
 export interface ISettings {
     cwd: string;
     workspace: string;
