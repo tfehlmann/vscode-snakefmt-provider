@@ -10,6 +10,7 @@ import os
 import pathlib
 import re
 import sys
+import sysconfig
 import traceback
 from typing import Any, Dict, Optional, Sequence
 
@@ -22,15 +23,39 @@ def update_sys_path(path_to_add: str, strategy: str) -> None:
     if path_to_add not in sys.path and os.path.isdir(path_to_add):
         if strategy == "useBundled":
             sys.path.insert(0, path_to_add)
-        elif strategy == "fromEnvironment":
+        else:
             sys.path.append(path_to_add)
 
 
+# **********************************************************
+# Update PATH before running anything.
+# **********************************************************
+def update_environ_path() -> None:
+    """Update PATH environment variable with the 'scripts' directory.
+    Windows: .venv/Scripts
+    Linux/MacOS: .venv/bin
+    """
+    scripts = sysconfig.get_path("scripts")
+    paths_variants = ["Path", "PATH"]
+
+    for var_name in paths_variants:
+        if var_name in os.environ:
+            paths = os.environ[var_name].split(os.pathsep)
+            if scripts not in paths:
+                paths.insert(0, scripts)
+                os.environ[var_name] = os.pathsep.join(paths)
+                break
+
+
 # Ensure that we can import LSP libraries, and other bundled libraries.
+BUNDLE_DIR = pathlib.Path(__file__).parent.parent
+# Always use bundled server files.
+update_sys_path(os.fspath(BUNDLE_DIR / "tool"), "useBundled")
 update_sys_path(
-    os.fspath(pathlib.Path(__file__).parent.parent / "libs"),
+    os.fspath(BUNDLE_DIR / "libs"),
     os.getenv("LS_IMPORT_STRATEGY", "useBundled"),
 )
+update_environ_path()
 
 # **********************************************************
 # Imports needed for the language server goes below this.
@@ -39,9 +64,10 @@ update_sys_path(
 import jsonrpc
 import lsprotocol.types as lsp
 import utils
-from pygls import protocol, server, uris, workspace
+from pygls import server, uris, workspace
 
 WORKSPACE_SETTINGS = {}
+GLOBAL_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "runner.py"
 
 MAX_WORKERS = 5
@@ -333,24 +359,20 @@ def initialize(params: lsp.InitializeParams) -> None:
     """LSP handler for initialize request."""
     log_to_output(f"CWD Server: {os.getcwd()}")
 
-    paths = "\r\n   ".join(sys.path)
-    log_to_output(f"sys.path used to run Server:\r\n   {paths}")
+    GLOBAL_SETTINGS.update(**params.initialization_options.get("globalSettings", {}))
 
     settings = params.initialization_options["settings"]
     _update_workspace_settings(settings)
     log_to_output(
         f"Settings used to run Server:\r\n{json.dumps(settings, indent=4, ensure_ascii=False)}\r\n"
     )
+    log_to_output(
+        f"Global settings:\r\n{json.dumps(GLOBAL_SETTINGS, indent=4, ensure_ascii=False)}\r\n"
+    )
 
-    if isinstance(LSP_SERVER.lsp, protocol.LanguageServerProtocol):
-        if any(setting["logLevel"] == "debug" for setting in settings):
-            LSP_SERVER.lsp.trace = lsp.TraceValues.Verbose
-        elif any(
-            setting["logLevel"] in ["error", "warn", "info"] for setting in settings
-        ):
-            LSP_SERVER.lsp.trace = lsp.TraceValues.Messages
-        else:
-            LSP_SERVER.lsp.trace = lsp.TraceValues.Off
+    paths = "\r\n   ".join(sys.path)
+    log_to_output(f"sys.path used to run Server:\r\n   {paths}")
+
     _log_version_info()
 
 
@@ -381,21 +403,21 @@ def _log_version_info() -> None:
             # This is text we get from running `snakefmt --version`
             # snakefmt, version 0.6.1 <--- This is the version we want.
             first_line = result.stdout.splitlines(keepends=False)[0]
-            actual_version = first_line.split(" ")[-1]
+            current_version = first_line.split(" ")[-1]
 
-            version = parse_version(actual_version)
+            version = parse_version(current_version)
             min_version = parse_version(MIN_VERSION)
 
             if version < min_version:
                 log_error(
                     f"Version of formatter running for {code_workspace} is NOT supported:\r\n"
                     f"SUPPORTED {TOOL_MODULE}>={min_version}\r\n"
-                    f"FOUND {TOOL_MODULE}=={actual_version}\r\n"
+                    f"FOUND {TOOL_MODULE}=={current_version}\r\n"
                 )
             else:
                 log_to_output(
                     f"SUPPORTED {TOOL_MODULE}>={min_version}\r\n"
-                    f"FOUND {TOOL_MODULE}=={actual_version}\r\n"
+                    f"FOUND {TOOL_MODULE}=={current_version}\r\n"
                 )
         except:  # pylint: disable=bare-except
             log_to_output(
@@ -406,37 +428,64 @@ def _log_version_info() -> None:
 # *****************************************************
 # Internal functional and settings management APIs.
 # *****************************************************
+def _get_global_defaults():
+    return {
+        "path": GLOBAL_SETTINGS.get("path", []),
+        "interpreter": GLOBAL_SETTINGS.get("interpreter", [sys.executable]),
+        "args": GLOBAL_SETTINGS.get("args", []),
+        "importStrategy": GLOBAL_SETTINGS.get("importStrategy", "useBundled"),
+        "showNotifications": GLOBAL_SETTINGS.get("showNotifications", "off"),
+        "disableLinting": GLOBAL_SETTINGS.get("disableLinting", False),
+        "enablePythonLinting": GLOBAL_SETTINGS.get("enablePythonLinting", True),
+        "config": GLOBAL_SETTINGS.get("config", ""),
+        "executable": GLOBAL_SETTINGS.get("executable", ""),
+    }
+
+
 def _update_workspace_settings(settings):
     if not settings:
-        key = os.getcwd()
+        key = utils.normalize_path(os.getcwd())
         WORKSPACE_SETTINGS[key] = {
+            "cwd": key,
             "workspaceFS": key,
             "workspace": uris.from_fs_path(key),
-            "logLevel": "error",
-            "path": [],
-            "interpreter": [sys.executable],
-            "args": [],
-            "importStrategy": "useBundled",
-            "showNotifications": "off",
+            **_get_global_defaults(),
         }
         return
 
     for setting in settings:
-        key = uris.to_fs_path(setting["workspace"])
+        key = utils.normalize_path(uris.to_fs_path(setting["workspace"]))
         WORKSPACE_SETTINGS[key] = {
             **setting,
             "workspaceFS": key,
         }
 
 
-def _get_document_key(document: workspace.Document):
-    document_workspace = pathlib.Path(document.path)
+def _get_settings_by_path(file_path: pathlib.Path):
     workspaces = {s["workspaceFS"] for s in WORKSPACE_SETTINGS.values()}
 
-    while document_workspace != document_workspace.parent:
-        if str(document_workspace) in workspaces:
-            return str(document_workspace)
-        document_workspace = document_workspace.parent
+    while file_path != file_path.parent:
+        str_file_path = utils.normalize_path(file_path)
+        if str_file_path in workspaces:
+            return WORKSPACE_SETTINGS[str_file_path]
+        file_path = file_path.parent
+
+    setting_values = list(WORKSPACE_SETTINGS.values())
+    return setting_values[0]
+
+
+def _get_document_key(document: workspace.Document):
+    if WORKSPACE_SETTINGS:
+        document_workspace = pathlib.Path(document.path)
+        workspaces = {s["workspaceFS"] for s in WORKSPACE_SETTINGS.values()}
+
+        # Find workspace settings for the given file.
+        while document_workspace != document_workspace.parent:
+            norm_path = utils.normalize_path(document_workspace)
+            if norm_path in workspaces:
+                return norm_path
+            document_workspace = document_workspace.parent
+
     return None
 
 
@@ -446,16 +495,13 @@ def _get_settings_by_document(document: workspace.Document | None):
 
     key = _get_document_key(document)
     if key is None:
-        key = os.fspath(pathlib.Path(document.path).parent)
+        # This is either a non-workspace file or there is no workspace.
+        key = utils.normalize_path(pathlib.Path(document.path).parent)
         return {
+            "cwd": key,
             "workspaceFS": key,
             "workspace": uris.from_fs_path(key),
-            "logLevel": "error",
-            "path": [],
-            "interpreter": [sys.executable],
-            "args": [],
-            "importStrategy": "useBundled",
-            "showNotifications": "off",
+            **_get_global_defaults(),
         }
 
     return WORKSPACE_SETTINGS[str(key)]
@@ -464,6 +510,19 @@ def _get_settings_by_document(document: workspace.Document | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
+def get_cwd(settings: Dict[str, Any], document: Optional[workspace.Document]) -> str:
+    """Returns cwd for the given settings and document."""
+    if settings["cwd"] == "${workspaceFolder}":
+        return settings["workspaceFS"]
+
+    if settings["cwd"] == "${fileDirname}":
+        if document is not None:
+            return os.fspath(pathlib.Path(document.path).parent)
+        return settings["workspaceFS"]
+
+    return settings["cwd"]
+
+
 # pylint: disable=too-many-branches,too-many-statements
 def _run_tool_on_document(
     document: workspace.Document,
@@ -481,7 +540,7 @@ def _run_tool_on_document(
     settings = copy.deepcopy(_get_settings_by_document(document))
 
     code_workspace = settings["workspaceFS"]
-    cwd = settings["workspaceFS"]
+    cwd = get_cwd(settings, document)
 
     use_path = False
     use_rpc = False
@@ -548,9 +607,11 @@ def _run_tool_on_document(
             use_stdin=use_stdin,
             cwd=cwd,
             source=document.source,
+            env={
+                "LS_IMPORT_STRATEGY": settings["importStrategy"],
+            },
         )
         result = _to_run_result_with_logging(result)
-
     else:
         # In this mode the tool is run as a module in the same process as the language server.
         log_to_output(" ".join([sys.executable, "-m"] + argv))
@@ -579,7 +640,7 @@ def _run_tool_on_document(
 def _run_tool(extra_args: Sequence[str], settings: Dict[str, Any]) -> utils.RunResult:
     """Runs tool."""
     code_workspace = settings["workspaceFS"]
-    cwd = settings["workspaceFS"]
+    cwd = get_cwd(settings, None)
 
     use_path = False
     use_rpc = False
@@ -622,6 +683,9 @@ def _run_tool(extra_args: Sequence[str], settings: Dict[str, Any]) -> utils.RunR
             argv=argv,
             use_stdin=True,
             cwd=cwd,
+            env={
+                "LS_IMPORT_STRATEGY": settings["importStrategy"],
+            },
         )
         result = _to_run_result_with_logging(result)
     else:

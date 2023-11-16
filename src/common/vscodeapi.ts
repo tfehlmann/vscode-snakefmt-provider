@@ -8,18 +8,19 @@ import {
     ConfigurationScope,
     Disposable,
     DocumentFormattingEditProvider,
-    DocumentSelector,
     languages,
-    OutputChannel,
+    LanguageStatusItem,
+    LogOutputChannel,
     Uri,
     window,
     workspace,
     WorkspaceConfiguration,
     WorkspaceFolder,
 } from 'vscode';
+import { DocumentSelector } from 'vscode-languageclient';
 
-export function createOutputChannel(name: string): OutputChannel {
-    return window.createOutputChannel(name);
+export function createOutputChannel(name: string): LogOutputChannel {
+    return window.createOutputChannel(name, { log: true });
 }
 
 export function getConfiguration(config: string, scope?: ConfigurationScope): WorkspaceConfiguration {
@@ -50,4 +51,8 @@ export function registerDocumentFormattingEditProvider(
     provider: DocumentFormattingEditProvider,
 ): Disposable {
     return languages.registerDocumentFormattingEditProvider(selector, provider);
+}
+
+export function createLanguageStatusItem(id: string, selector: DocumentSelector): LanguageStatusItem {
+    return languages.createLanguageStatusItem(id, selector);
 }

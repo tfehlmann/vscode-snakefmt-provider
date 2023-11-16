@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 import { Disposable } from 'vscode';
-import { traceLog } from './log/logging';
-import { getDocumentSelector } from './utilities';
+import { traceLog } from './logging';
 import { registerDocumentFormattingEditProvider } from './vscodeapi';
+import { getDocumentSelector } from './utilities';
 
 let disposables: Disposable[] = [];
 export function registerEmptyFormatter(): void {

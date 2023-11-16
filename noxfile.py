@@ -8,7 +8,7 @@ import pathlib
 import re
 import urllib.request as url_lib
 import zipfile
-from typing import List
+from typing import List, Optional, Union
 
 import nox  # pylint: disable=import-error
 
@@ -26,9 +26,6 @@ def _install_bundle(session: nox.Session) -> None:
         "./requirements.txt",
     )
 
-    session.install("packaging")
-    _install_wheels(f"{os.getcwd()}/bundled/libs", "typed-ast")
-
 
 def _check_files(names: List[str]) -> None:
     root_dir = pathlib.Path(__file__).parent
@@ -41,10 +38,17 @@ def _check_files(names: List[str]) -> None:
 
 
 def _update_pip_packages(session: nox.Session) -> None:
-    session.run("pip-compile", "--generate-hashes", "--upgrade", "./requirements.in")
     session.run(
         "pip-compile",
         "--generate-hashes",
+        "--resolver=backtracking",
+        "--upgrade",
+        "./requirements.in",
+    )
+    session.run(
+        "pip-compile",
+        "--generate-hashes",
+        "--resolver=backtracking",
         "--upgrade",
         "./src/test/python_tests/requirements.in",
     )
@@ -92,8 +96,8 @@ def _update_npm_packages(session: nox.Session) -> None:
         new_package_json += "\n"
     package_json_path.write_text(new_package_json, encoding="utf-8")
 
-    session.run("npm", "audit", "fix", external=True)
-    session.run("npm", "install", external=True)
+    session.run("npm", "audit", "fix", external=True, success_codes=[0, 1])
+    session.run("npm", "install", external=True, success_codes=[0, 1])
 
 
 def _setup_template_environment(session: nox.Session) -> None:
@@ -102,14 +106,14 @@ def _setup_template_environment(session: nox.Session) -> None:
     _install_bundle(session)
 
 
-@nox.session(python="3.7")
+@nox.session(python="3.8")
 def install_bundled_libs(session):
     """Installs the libraries that will be bundled with the extension."""
     session.install("wheel")
     _install_bundle(session)
 
 
-@nox.session(python="3.7")
+@nox.session(python="3.8")
 def setup(session: nox.Session) -> None:
     """Sets up the extension for development."""
     _setup_template_environment(session)
@@ -125,7 +129,6 @@ def tests(session: nox.Session) -> None:
 @nox.session()
 def lint(session: nox.Session) -> None:
     """Runs linter and formatter checks on python files."""
-    session.install("-r", "./requirements.txt")
     session.install("-r", "src/test/python_tests/requirements.txt")
 
     session.install("pylint")
@@ -190,16 +193,24 @@ def _get_module_name() -> str:
     return package_json["serverInfo"]["module"]
 
 
+def _get_version(module: str) -> Union[str, None]:
+    requirements_file = pathlib.Path(__file__).parent / "requirements.txt"
+    lines = requirements_file.read_text(encoding="utf-8").splitlines(keepends=False)
+    for line in lines:
+        if line.startswith(module):
+            _, version = line.split(" ")[0].split("==")
+            return version
+    return None
+
+
 @nox.session()
 def validate_readme(session: nox.Session) -> None:
     """Ensures the formatter version in 'requirements.txt' matches 'readme.md'."""
-    requirements_file = pathlib.Path(__file__).parent / "requirements.txt"
+
     readme_file = pathlib.Path(__file__).parent / "README.md"
 
-    lines = requirements_file.read_text(encoding="utf-8").splitlines(keepends=False)
-    module = _get_module_name()
-    formatter_ver = list(line for line in lines if line.startswith(module))[0]
-    name, version = formatter_ver.split(" ")[0].split("==")
+    name = _get_module_name()
+    version = _get_version(name)
 
     session.log(f"Looking for {name}={version} in README.md")
     content = readme_file.read_text(encoding="utf-8")
@@ -263,12 +274,14 @@ def _download_and_extract(root, url):
                 wheel.extract(zip_info.filename, root)
 
 
-def _install_wheels(root, package_name, version="latest"):
+def _install_wheels(root, package_name, version: Optional[str] = None):
     from packaging.version import parse as version_parser
 
     data = _get_pypi_package_data(package_name)
 
-    if version == "latest":
+    if version is None:
+        use_version = _get_version(package_name)
+    elif version == "latest":
         use_version = max(data["releases"].keys(), key=version_parser)
     else:
         use_version = version
