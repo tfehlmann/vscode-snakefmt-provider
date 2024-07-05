@@ -1,6 +1,7 @@
 """
 Test for path and interpreter settings.
 """
+
 import copy
 from typing import Dict
 
