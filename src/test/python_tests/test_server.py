@@ -3,6 +3,7 @@
 """
 Test for linting over LSP.
 """
+
 import difflib
 from threading import Event
 
@@ -164,9 +165,9 @@ def test_linting():
             actual["diagnostics"], expected["diagnostics"]
         ):
             for key, value in expected_diag.items():
-                assert actual_diag[key] == value, (
-                    f"{file_path}: {key}: {actual_diag[key]!r} != {value!r}"
-                )
+                assert (
+                    actual_diag[key] == value
+                ), f"{file_path}: {key}: {actual_diag[key]!r} != {value!r}"
 
 
 def test_formatting():
