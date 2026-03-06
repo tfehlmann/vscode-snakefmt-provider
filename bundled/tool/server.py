@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 """Implementation of tool support over LSP."""
+
 from __future__ import annotations
 
 import copy
@@ -153,7 +154,9 @@ def try_handle_black_error(
     else:
         black_error_message = error.splitlines()[2]
     # try to find line number
-    line_match = re.match(r"Cannot parse(?:[^:]*): (\d+)", black_error_message, re.UNICODE)
+    line_match = re.match(
+        r"Cannot parse(?:[^:]*): (\d+)", black_error_message, re.UNICODE
+    )
     if line_match:
         line_number = int(line_match.group(1)) - 1
         line_start = len(
@@ -511,7 +514,9 @@ def _get_settings_by_document(document: workspace.TextDocument | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
-def get_cwd(settings: Dict[str, Any], document: Optional[workspace.TextDocument]) -> str:
+def get_cwd(
+    settings: Dict[str, Any], document: Optional[workspace.TextDocument]
+) -> str:
     """Returns cwd for the given settings and document."""
     if settings["cwd"] == "${workspaceFolder}":
         return settings["workspaceFS"]

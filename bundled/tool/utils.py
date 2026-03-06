@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 """Utility functions and classes for use with running tools over LSP."""
+
 from __future__ import annotations
 
 import contextlib
@@ -102,9 +103,9 @@ def _run_module(
     str_output = CustomIO("<stdout>", encoding="utf-8")
     str_error = CustomIO("<stderr>", encoding="utf-8")
 
-    with contextlib.suppress(SystemExit), substitute_attr(sys, "argv", argv), redirect_io(
-        "stdout", str_output
-    ), redirect_io("stderr", str_error):
+    with contextlib.suppress(SystemExit), substitute_attr(
+        sys, "argv", argv
+    ), redirect_io("stdout", str_output), redirect_io("stderr", str_error):
         if use_stdin and source is not None:
             str_input = CustomIO("<stdin>", encoding="utf-8", newline="\n")
             with redirect_io("stdin", str_input):
@@ -178,9 +179,9 @@ def _run_api(
     str_output = CustomIO("<stdout>", encoding="utf-8")
     str_error = CustomIO("<stderr>", encoding="utf-8")
 
-    with contextlib.suppress(SystemExit), substitute_attr(sys, "argv", argv), redirect_io(
-        "stdout", str_output
-    ), redirect_io("stderr", str_error):
+    with contextlib.suppress(SystemExit), substitute_attr(
+        sys, "argv", argv
+    ), redirect_io("stdout", str_output), redirect_io("stderr", str_error):
         if use_stdin and source is not None:
             str_input = CustomIO("<stdin>", encoding="utf-8", newline="\n")
             with redirect_io("stdin", str_input):
