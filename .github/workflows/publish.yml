@@ -73,7 +73,7 @@ jobs:
           node-version: 20
 
       - name: Publish to VS Code Marketplace
-        run: npx @vscode/vsce publish --packagePath *.vsix
+        run: npx @vscode/vsce publish --packagePath *.vsix ${{ github.event.release.prerelease && '--pre-release' || '' }}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
@@ -93,6 +93,6 @@ jobs:
           node-version: 20
 
       - name: Publish to Open VSX
-        run: npx ovsx publish *.vsix --pat $OVSX_PAT
+        run: npx ovsx publish *.vsix --pat $OVSX_PAT ${{ github.event.release.prerelease && '--pre-release' || '' }}
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
