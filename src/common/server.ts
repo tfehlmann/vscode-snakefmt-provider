@@ -72,6 +72,9 @@ async function createServer(
 }
 
 let _disposables: Disposable[] = [];
+const MIN_RESTART_INTERVAL = 1000; // Minimum ms between restarts
+let _lastRestartTime = 0;
+
 export async function restartServer(
     workspaceSetting: ISettings,
     serverId: string,
@@ -79,6 +82,14 @@ export async function restartServer(
     outputChannel: LogOutputChannel,
     lsClient?: LanguageClient,
 ): Promise<LanguageClient | undefined> {
+    const now = Date.now();
+    const timeSinceLastRestart = now - _lastRestartTime;
+    if (timeSinceLastRestart < MIN_RESTART_INTERVAL) {
+        traceInfo(`Server: Restart throttled (${timeSinceLastRestart}ms since last restart)`);
+        await new Promise((resolve) => setTimeout(resolve, MIN_RESTART_INTERVAL - timeSinceLastRestart));
+    }
+    _lastRestartTime = Date.now();
+
     if (lsClient) {
         traceInfo(`Server: Stop requested`);
         try {

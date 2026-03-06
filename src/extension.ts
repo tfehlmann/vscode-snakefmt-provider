@@ -18,6 +18,7 @@ import { createOutputChannel, onDidChangeConfiguration, registerCommand } from '
 import { getProjectRoot } from './common/utilities';
 import { registerEmptyFormatter } from './common/nullFormatter';
 import { registerLanguageStatusItem, updateStatus } from './common/status';
+import { MIN_PYTHON_VERSION } from './common/constants';
 
 let lsClient: LanguageClient | undefined;
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
@@ -46,7 +47,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                 'Python interpreter missing:\r\n' +
                     '[Option 1] Select python interpreter using the ms-python.python.\r\n' +
                     `[Option 2] Set an interpreter using "${serverId}.interpreter" setting.\r\n`,
-                'Please use Python 3.8 or greater.',
+                `Please use Python ${MIN_PYTHON_VERSION} or greater.`,
             );
         } else {
             lsClient = await restartServer(workspaceSetting, serverId, serverName, outputChannel, lsClient);

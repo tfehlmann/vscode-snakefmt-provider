@@ -5,6 +5,7 @@
 import { commands, Disposable, Event, EventEmitter, Uri } from 'vscode';
 import { traceError, traceLog } from './logging';
 import { PythonExtension, ResolvedEnvironment } from '@vscode/python-extension';
+import { MIN_PYTHON_MINOR, MIN_PYTHON_VERSION } from './constants';
 
 export interface IInterpreterDetails {
     path?: string[];
@@ -30,7 +31,9 @@ export async function initializePython(disposables: Disposable[]): Promise<void>
         if (api) {
             disposables.push(
                 api.environments.onDidChangeActiveEnvironmentPath((e) => {
-                    onDidChangePythonInterpreterEvent.fire({ path: [e.path], resource: e.resource?.uri });
+                    const resource = e.resource;
+                    const uri = resource && 'uri' in resource ? resource.uri : resource;
+                    onDidChangePythonInterpreterEvent.fire({ path: [e.path], resource: uri });
                 }),
             );
 
@@ -70,11 +73,11 @@ export async function runPythonExtensionCommand(command: string, ...rest: any[])
 
 export function checkVersion(resolved: ResolvedEnvironment | undefined): boolean {
     const version = resolved?.version;
-    if (version?.major === 3 && version?.minor >= 8) {
+    if (version?.major === 3 && version?.minor >= MIN_PYTHON_MINOR) {
         return true;
     }
     traceError(`Python version ${version?.major}.${version?.minor} is not supported.`);
     traceError(`Selected python path: ${resolved?.executable.uri?.fsPath}`);
-    traceError('Supported versions are 3.8 and above.');
+    traceError(`Supported versions are ${MIN_PYTHON_VERSION} and above.`);
     return false;
 }

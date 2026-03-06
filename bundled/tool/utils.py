@@ -102,20 +102,17 @@ def _run_module(
     str_output = CustomIO("<stdout>", encoding="utf-8")
     str_error = CustomIO("<stderr>", encoding="utf-8")
 
-    try:
-        with substitute_attr(sys, "argv", argv):
-            with redirect_io("stdout", str_output):
-                with redirect_io("stderr", str_error):
-                    if use_stdin and source is not None:
-                        str_input = CustomIO("<stdin>", encoding="utf-8", newline="\n")
-                        with redirect_io("stdin", str_input):
-                            str_input.write(source)
-                            str_input.seek(0)
-                            runpy.run_module(module, run_name="__main__")
-                    else:
-                        runpy.run_module(module, run_name="__main__")
-    except SystemExit:
-        pass
+    with contextlib.suppress(SystemExit), substitute_attr(sys, "argv", argv), redirect_io(
+        "stdout", str_output
+    ), redirect_io("stderr", str_error):
+        if use_stdin and source is not None:
+            str_input = CustomIO("<stdin>", encoding="utf-8", newline="\n")
+            with redirect_io("stdin", str_input):
+                str_input.write(source)
+                str_input.seek(0)
+                runpy.run_module(module, run_name="__main__")
+        else:
+            runpy.run_module(module, run_name="__main__")
 
     return RunResult(str_output.get_value(), str_error.get_value())
 
@@ -181,19 +178,16 @@ def _run_api(
     str_output = CustomIO("<stdout>", encoding="utf-8")
     str_error = CustomIO("<stderr>", encoding="utf-8")
 
-    try:
-        with substitute_attr(sys, "argv", argv):
-            with redirect_io("stdout", str_output):
-                with redirect_io("stderr", str_error):
-                    if use_stdin and source is not None:
-                        str_input = CustomIO("<stdin>", encoding="utf-8", newline="\n")
-                        with redirect_io("stdin", str_input):
-                            str_input.write(source)
-                            str_input.seek(0)
-                            callback(argv, str_output, str_error, str_input)
-                    else:
-                        callback(argv, str_output, str_error)
-    except SystemExit:
-        pass
+    with contextlib.suppress(SystemExit), substitute_attr(sys, "argv", argv), redirect_io(
+        "stdout", str_output
+    ), redirect_io("stderr", str_error):
+        if use_stdin and source is not None:
+            str_input = CustomIO("<stdin>", encoding="utf-8", newline="\n")
+            with redirect_io("stdin", str_input):
+                str_input.write(source)
+                str_input.seek(0)
+                callback(argv, str_output, str_error, str_input)
+        else:
+            callback(argv, str_output, str_error)
 
     return RunResult(str_output.get_value(), str_error.get_value())

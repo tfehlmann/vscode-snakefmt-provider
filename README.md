@@ -1,6 +1,6 @@
 # Snakefmt extension for Visual Studio Code
 
-A [Visual Studio Code](https://code.visualstudio.com/) extension that formats [Snakemake](https://snakemake.readthedocs.io/) code using [Snakefmt](https://github.com/snakemake/snakefmt). The extension ships with `snakefmt=0.10.2`. 
+A [Visual Studio Code](https://code.visualstudio.com/) extension that formats [Snakemake](https://snakemake.readthedocs.io/) code using [Snakefmt](https://github.com/snakemake/snakefmt). The extension ships with `snakefmt=0.11.4`. 
 The bundled `snakefmt` is used if no `path` to the executable or `interpreter` is specified.
 
 ## Features
@@ -24,17 +24,131 @@ vscode settings.json file:
 
 ## Settings
 
-| Settings                         | Default      | Description                                                                                                                                                                                                                                                              |
-| -------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| snakefmt.args             | `[]`         | Custom arguments passed to `snakefmt`. E.g `"snakefmt.args" = ["--config", "<file>"]` |
-| snakefmt.config           | `""`         | Snakefmt config file. Deprecated. Use `snakefmt.args` instead. Usage `"snakefmt.config" = "<file>"` |
-| snakefmt.disableLinting   | `false`         | Disable linting of snakemake files. |
-| snakefmt.enablePythonLinting   | `false`    | Enable linting of python files with `snakefmt`. |
-| snakefmt.path             | `[]`         | Setting to provide custom `snakefmt` executable. Example 1: `["~/global_env/snakefmt"]` Example 2: `["conda", "run", "-n", "fmt_env", "--no-capture-output", "snakefmt"]` |
-| snakefmt.executable       | `""`         | Alias for `snakefmt.path`. Deprecated. Use `snakefmt.path` instead. |
-| snakefmt.interpreter      | `[]`         | Path to a python interpreter to use to run the formatter server.                                                                                                                                                                                                            |
-| snakefmt.importStrategy   | `useBundled` | Setting to choose where to load `snakefmt` from. `useBundled` picks snakefmt bundled with the extension. `fromEnvironment` uses `snakefmt` available in the environment.                                                                                                          |
-| snakefmt.showNotification | `off`        | Setting to control when a notification is shown.                                                                                                                                                                                                                         |
+### [`snakefmt.args`](#snakefmtargs)
+
+Custom arguments passed to `snakefmt`. Each argument should be provided as a separate string in the array.
+
+**Default value**: `[]`
+**Type**: `string[]`
+
+```json
+"snakefmt.args": ["--config", "<file>"]
+```
+
+### [`snakefmt.disableLinting`](#snakefmtdisablelinting)
+
+Disable linting of Snakemake files.
+
+**Default value**: `false`
+**Type**: `boolean`
+
+```json
+"snakefmt.disableLinting": true
+```
+
+### [`snakefmt.enablePythonLinting`](#snakefmtenablepythonlinting)
+
+Enable linting of Python files with `snakefmt`.
+
+**Default value**: `false`
+**Type**: `boolean`
+
+```json
+"snakefmt.enablePythonLinting": true
+```
+
+### [`snakefmt.path`](#snakefmtpath)
+
+Path or command to be used by the extension to run `snakefmt`. Accepts an array of a single or multiple strings. If passing a command, each argument should be provided as a separate string in the array.
+
+> **Note**: Using this option may slow down server response time.
+
+**Default value**: `[]`
+**Type**: `string[]`
+
+```json
+// Use a custom binary
+"snakefmt.path": ["~/global_env/snakefmt"]
+
+// Use conda
+"snakefmt.path": ["conda", "run", "-n", "fmt_env", "--no-capture-output", "snakefmt"]
+```
+
+### [`snakefmt.interpreter`](#snakefmtinterpreter)
+
+Path to a Python executable that will be used to launch the formatter server and any subprocess. When set to `[]`, the extension will use the path to the selected Python interpreter.
+
+**Default value**: `[]`
+**Type**: `string[]`
+
+```json
+"snakefmt.interpreter": ["/path/to/python"]
+```
+
+### [`snakefmt.importStrategy`](#snakefmtimportstrategy)
+
+Defines where `snakefmt` is imported from. This setting may be ignored if `snakefmt.path` is set.
+
+- `"useBundled"`: Always use the bundled version of `snakefmt`.
+- `"fromEnvironment"`: Use `snakefmt` from the environment, falling back to the bundled version if not available.
+
+**Default value**: `"useBundled"`
+**Type**: `"useBundled" | "fromEnvironment"`
+
+```json
+"snakefmt.importStrategy": "fromEnvironment"
+```
+
+### [`snakefmt.showNotifications`](#snakefmtshownotifications)
+
+Controls when notifications are shown by this extension.
+
+- `"off"`: All notifications are turned off, any errors or warnings are still available in the logs.
+- `"onError"`: Notifications are shown only in the case of an error.
+- `"onWarning"`: Notifications are shown for errors and warnings.
+- `"always"`: Notifications are shown for anything that the server chooses to show.
+
+**Default value**: `"off"`
+**Type**: `"off" | "onError" | "onWarning" | "always"`
+
+```json
+"snakefmt.showNotifications": "onError"
+```
+
+### [`snakefmt.trace.server`](#snakefmttraceserver)
+
+Controls the level of trace logging for communication between VS Code and the Snakefmt language server. Useful when filing bug reports.
+
+- `"off"`: No trace logging.
+- `"messages"`: Log messages sent between client and server.
+- `"verbose"`: Log messages and their content.
+
+**Default value**: `"off"`
+**Type**: `"off" | "messages" | "verbose"`
+
+```json
+"snakefmt.trace.server": "verbose"
+```
+
+### Deprecated settings
+
+#### [`snakefmt.config`](#snakefmtconfig)
+
+> **Deprecated**: Use `snakefmt.args` with `["--config", "<file>"]` instead.
+
+Snakefmt config file.
+
+**Default value**: `""`
+**Type**: `string`
+
+#### [`snakefmt.executable`](#snakefmtexecutable)
+
+> **Deprecated**: Use `snakefmt.path` instead.
+
+Alias for `snakefmt.path`.
+
+**Default value**: `""`
+**Type**: `string`
 
 ## Commands
 
@@ -56,6 +170,14 @@ Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider
 
 
 ## Release Notes
+
+### 0.9.0
+- Update bundled `snakefmt` to `0.11.4`
+- Require Python 3.11+ (previously 3.8)
+- Add automated publishing to VS Code Marketplace and Open VSX
+- Update CI to Node 20, Python 3.11+, latest GitHub Action versions
+- Migrate to ESLint 10 flat config
+- Update all npm and Python dependencies
 
 ### 0.8.0
 - Update bundled `snakefmt` to `0.10.2`

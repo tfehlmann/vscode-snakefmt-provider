@@ -64,14 +64,15 @@ update_environ_path()
 import jsonrpc
 import lsprotocol.types as lsp
 import utils
-from pygls import server, uris, workspace
+from pygls import uris, workspace
+from pygls.lsp.server import LanguageServer
 
 WORKSPACE_SETTINGS = {}
 GLOBAL_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "runner.py"
 
 MAX_WORKERS = 5
-LSP_SERVER = server.LanguageServer(
+LSP_SERVER = LanguageServer(
     name="snakefmt-server", version="0.1.0", max_workers=MAX_WORKERS
 )
 
@@ -110,25 +111,31 @@ MIN_VERSION = "0.1.0"
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
 def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
     """LSP handler for textDocument/didOpen request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
-    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
+    LSP_SERVER.text_document_publish_diagnostics(
+        lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+    )
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
 def did_save(params: lsp.DidSaveTextDocumentParams) -> None:
     """LSP handler for textDocument/didSave request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
-    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
+    LSP_SERVER.text_document_publish_diagnostics(
+        lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+    )
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
 def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
     """LSP handler for textDocument/didClose request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     # Publishing empty diagnostics to clear the entries for this file.
-    LSP_SERVER.publish_diagnostics(document.uri, [])
+    LSP_SERVER.text_document_publish_diagnostics(
+        lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=[])
+    )
 
 
 def slugify(string: str) -> str:
@@ -137,7 +144,7 @@ def slugify(string: str) -> str:
 
 
 def try_handle_black_error(
-    error_message: str, error: str, document: workspace.Document
+    error_message: str, error: str, document: workspace.TextDocument
 ) -> Optional[list[lsp.Diagnostic]]:
     """Try to handle black error."""
     error_message_match2 = re.search("```\n?(.+)\n?```", error_message)
@@ -146,7 +153,7 @@ def try_handle_black_error(
     else:
         black_error_message = error.splitlines()[2]
     # try to find line number
-    line_match = re.match(r"Cannot parse: (\d+)", black_error_message, re.UNICODE)
+    line_match = re.match(r"Cannot parse(?:[^:]*): (\d+)", black_error_message, re.UNICODE)
     if line_match:
         line_number = int(line_match.group(1)) - 1
         line_start = len(
@@ -169,7 +176,7 @@ def try_handle_black_error(
 
 
 def try_handle_snakefmt_error(
-    error_message: str, document: workspace.Document
+    error_message: str, document: workspace.TextDocument
 ) -> Optional[list[lsp.Diagnostic]]:
     """Try to handle snakefmt error."""
     # snakefmt uses a format like "ExceptionName: (L?)X"
@@ -216,7 +223,7 @@ def try_handle_snakefmt_error(
 
 
 def parse_formatting_error(
-    error: str, document: workspace.Document
+    error: str, document: workspace.TextDocument
 ) -> list[lsp.Diagnostic]:
     """Parse formatting error from snakefmt output and return a list of diagnostics."""
     error_message_match = re.match(
@@ -246,7 +253,7 @@ def parse_formatting_error(
     ]
 
 
-def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
+def _linting_helper(document: workspace.TextDocument) -> list[lsp.Diagnostic]:
     try:
         settings = _get_settings_by_document(document)
         if settings["disableLinting"]:
@@ -255,10 +262,7 @@ def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
             return []
         result = _run_tool_on_document(document, extra_args=["--check"])
         if not result.stderr.startswith("[ERROR]"):
-            LSP_SERVER.show_message_log(
-                f"Successfully linted {document.uri}",
-                lsp.MessageType.Info,
-            )
+            log_to_output(f"Successfully linted {document.uri}", lsp.MessageType.Info)
         else:
             return parse_formatting_error(result.stderr, document)
 
@@ -280,10 +284,7 @@ def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
             ]
         )
     except Exception:  # pylint: disable=broad-except
-        LSP_SERVER.show_message_log(
-            f"Linting failed with error:\r\n{traceback.format_exc()}\n\n",
-            lsp.MessageType.Error,
-        )
+        log_error(f"Linting failed with error:\r\n{traceback.format_exc()}")
     return []
 
 
@@ -301,7 +302,7 @@ def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_FORMATTING)
 def formatting(params: lsp.DocumentFormattingParams) -> list[lsp.TextEdit] | None:
     """LSP handler for textDocument/formatting request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     edits = _formatting_helper(document)
     if edits:
         return edits
@@ -311,7 +312,7 @@ def formatting(params: lsp.DocumentFormattingParams) -> list[lsp.TextEdit] | Non
     return None
 
 
-def _formatting_helper(document: workspace.Document) -> list[lsp.TextEdit] | None:
+def _formatting_helper(document: workspace.TextDocument) -> list[lsp.TextEdit] | None:
     result = _run_tool_on_document(document, use_stdin=True)
     if result.stdout:
         new_source = _match_line_endings(document, result.stdout)
@@ -337,7 +338,7 @@ def _get_line_endings(lines: list[str]) -> str:
         return None
 
 
-def _match_line_endings(document: workspace.Document, text: str) -> str:
+def _match_line_endings(document: workspace.TextDocument, text: str) -> str:
     """Ensures that the edited text line endings matches the document line endings."""
     expected = _get_line_endings(document.source.splitlines(keepends=True))
     actual = _get_line_endings(text.splitlines(keepends=True))
@@ -474,7 +475,7 @@ def _get_settings_by_path(file_path: pathlib.Path):
     return setting_values[0]
 
 
-def _get_document_key(document: workspace.Document):
+def _get_document_key(document: workspace.TextDocument):
     if WORKSPACE_SETTINGS:
         document_workspace = pathlib.Path(document.path)
         workspaces = {s["workspaceFS"] for s in WORKSPACE_SETTINGS.values()}
@@ -489,7 +490,7 @@ def _get_document_key(document: workspace.Document):
     return None
 
 
-def _get_settings_by_document(document: workspace.Document | None):
+def _get_settings_by_document(document: workspace.TextDocument | None):
     if document is None or document.path is None:
         return list(WORKSPACE_SETTINGS.values())[0]
 
@@ -510,7 +511,7 @@ def _get_settings_by_document(document: workspace.Document | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
-def get_cwd(settings: Dict[str, Any], document: Optional[workspace.Document]) -> str:
+def get_cwd(settings: Dict[str, Any], document: Optional[workspace.TextDocument]) -> str:
     """Returns cwd for the given settings and document."""
     if settings["cwd"] == "${workspaceFolder}":
         return settings["workspaceFS"]
@@ -525,7 +526,7 @@ def get_cwd(settings: Dict[str, Any], document: Optional[workspace.Document]) ->
 
 # pylint: disable=too-many-branches,too-many-statements
 def _run_tool_on_document(
-    document: workspace.Document,
+    document: workspace.TextDocument,
     use_stdin: bool = False,
     extra_args: Sequence[str] = None,
 ) -> utils.RunResult | None:
@@ -705,7 +706,7 @@ def _run_tool(extra_args: Sequence[str], settings: Dict[str, Any]) -> utils.RunR
         if result.stderr:
             log_to_output(result.stderr)
 
-    if LSP_SERVER.lsp.trace == lsp.TraceValues.Verbose:
+    if LSP_SERVER.protocol.trace == lsp.TraceValues.Verbose:
         log_to_output(f"\r\n{result.stdout}\r\n")
 
     return result
@@ -729,28 +730,40 @@ def log_to_output(
     message: str, msg_type: lsp.MessageType = lsp.MessageType.Log
 ) -> None:
     """Logs messages to Output > Snakefmt Formatter channel only."""
-    LSP_SERVER.show_message_log(message, msg_type)
+    LSP_SERVER.window_log_message(lsp.LogMessageParams(type=msg_type, message=message))
 
 
 def log_error(message: str) -> None:
     """Logs messages with notification on error."""
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Error)
+    LSP_SERVER.window_log_message(
+        lsp.LogMessageParams(type=lsp.MessageType.Error, message=message)
+    )
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onError", "onWarning", "always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Error)
+        LSP_SERVER.window_show_message(
+            lsp.ShowMessageParams(type=lsp.MessageType.Error, message=message)
+        )
 
 
 def log_warning(message: str) -> None:
     """Logs messages with notification on warning."""
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Warning)
+    LSP_SERVER.window_log_message(
+        lsp.LogMessageParams(type=lsp.MessageType.Warning, message=message)
+    )
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onWarning", "always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Warning)
+        LSP_SERVER.window_show_message(
+            lsp.ShowMessageParams(type=lsp.MessageType.Warning, message=message)
+        )
 
 
 def log_always(message: str) -> None:
     """Logs messages with notification."""
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Info)
+    LSP_SERVER.window_log_message(
+        lsp.LogMessageParams(type=lsp.MessageType.Info, message=message)
+    )
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Info)
+        LSP_SERVER.window_show_message(
+            lsp.ShowMessageParams(type=lsp.MessageType.Info, message=message)
+        )
 
 
 # *****************************************************

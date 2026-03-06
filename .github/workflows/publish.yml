@@ -1,0 +1,98 @@
+# Publish extension to VS Code Marketplace and Open VSX Registry
+#
+# Triggered when a GitHub Release is published.
+#
+# Required repository secrets:
+#   VSCE_PAT  - Azure DevOps Personal Access Token
+#               Azure DevOps -> User Settings -> Personal Access Tokens
+#               Scope: "Marketplace (Manage)"
+#   OVSX_PAT  - Open VSX Access Token
+#               https://open-vsx.org -> User Settings -> Access Tokens
+#
+# One-time setup for Open VSX:
+#   npx ovsx create-namespace tfehlmann --pat <OVSX_PAT>
+
+name: Publish Extension
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build VSIX
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Use Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python tools
+        run: python -m pip install -U pip wheel nox
+
+      - name: Run npm ci
+        run: npm ci
+
+      - name: Install bundled python libraries
+        run: python -m nox --session install_bundled_libs
+
+      - name: Build VSIX
+        run: npm run vsce-package
+
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatter-package
+          path: '*.vsix'
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-vscode-marketplace:
+    name: Publish to VS Code Marketplace
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download VSIX
+        uses: actions/download-artifact@v4
+        with:
+          name: formatter-package
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Publish to VS Code Marketplace
+        run: npx @vscode/vsce publish --packagePath *.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+  publish-open-vsx:
+    name: Publish to Open VSX
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download VSIX
+        uses: actions/download-artifact@v4
+        with:
+          name: formatter-package
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Publish to Open VSX
+        run: npx ovsx publish *.vsix --pat $OVSX_PAT
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}

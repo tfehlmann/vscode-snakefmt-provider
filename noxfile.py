@@ -64,7 +64,6 @@ def _update_npm_packages(session: nox.Session) -> None:
     pinned = {
         "vscode-languageclient",
         "@types/vscode",
-        "@types/node",
     }
     package_json_path = pathlib.Path(__file__).parent / "package.json"
     package_json = json.loads(package_json_path.read_text(encoding="utf-8"))
@@ -106,14 +105,14 @@ def _setup_template_environment(session: nox.Session) -> None:
     _install_bundle(session)
 
 
-@nox.session(python="3.8")
+@nox.session(python="3.11")
 def install_bundled_libs(session):
     """Installs the libraries that will be bundled with the extension."""
     session.install("wheel")
     _install_bundle(session)
 
 
-@nox.session(python="3.8")
+@nox.session(python="3.11")
 def setup(session: nox.Session) -> None:
     """Sets up the extension for development."""
     _setup_template_environment(session)

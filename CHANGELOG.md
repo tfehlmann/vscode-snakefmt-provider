@@ -1,4 +1,15 @@
 # Change Log
+### 0.9.0
+- Update bundled `snakefmt` to `0.11.4`
+- Require Python 3.11+ (previously 3.8)
+- Add automated publishing to VS Code Marketplace and Open VSX
+- Update CI to Node 20, Python 3.11+, latest GitHub Action versions
+- Migrate to ESLint 10 flat config
+- Update all npm and Python dependencies
+
+### 0.8.0
+- Update bundled `snakefmt` to `0.10.2`
+
 ### 0.7.0 (preview release)
 - Update bundled `snakefmt` to `0.8.5`
 - Fix "There is no formatter for Snakemake files installed" error
