@@ -1,6 +1,6 @@
 # Snakefmt extension for Visual Studio Code
 
-A [Visual Studio Code](https://code.visualstudio.com/) extension that formats [Snakemake](https://snakemake.readthedocs.io/) code using [Snakefmt](https://github.com/snakemake/snakefmt). The extension ships with `snakefmt=0.11.4`. 
+A [Visual Studio Code](https://code.visualstudio.com/) extension that formats [Snakemake](https://snakemake.readthedocs.io/) code using [Snakefmt](https://github.com/snakemake/snakefmt). The extension ships with `snakefmt=1.0.0`. 
 The bundled `snakefmt` is used if no `path` to the executable or `interpreter` is specified.
 
 ## Features
@@ -170,6 +170,11 @@ Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider
 
 
 ## Release Notes
+
+### 0.10.0
+- Update bundled `snakefmt` to `1.0.0`
+- **Breaking**: snakefmt now automatically reorders rule directives by default. Users can opt out with `--no-sort` via `snakefmt.args`
+- Update bundled `black` to `26.3.1`
 
 ### 0.9.0
 - Update bundled `snakefmt` to `0.11.4`

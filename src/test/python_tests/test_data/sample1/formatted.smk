@@ -25,12 +25,12 @@ rule bwa_map:
         lambda wildcards: config["samples"][wildcards.sample],
     output:
         temp("mapped_reads/{sample}.bam"),
-    params:
-        rg=r"@RG\tID:{sample}\tSM:{sample}",
-        dummy="dm",
     log:
         "logs/bwa_mem/{sample}.log",
     threads: 8
+    params:
+        rg=r"@RG\tID:{sample}\tSM:{sample}",
+        dummy="dm",
     shell:
         "(bwa mem -R '{params.rg}' -t {threads} {input} | "
         "samtools view -Sb - > {output}) 2> {log}"
@@ -42,8 +42,7 @@ rule samtools_sort:
     output:
         protected("sorted_reads/{sample}.bam"),
     shell:
-        "samtools sort -T sorted_reads/{wildcards.sample} "
-        "-O bam {input} > {output}"
+        "samtools sort -T sorted_reads/{wildcards.sample} " "-O bam {input} > {output}"
 
 
 rule samtools_index:

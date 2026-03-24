@@ -1,4 +1,9 @@
 # Change Log
+### 0.10.0
+- Update bundled `snakefmt` to `1.0.0`
+- **Breaking**: snakefmt now automatically reorders rule directives by default. Users can opt out with `--no-sort` via `snakefmt.args`
+- Update bundled `black` to `26.3.1`
+
 ### 0.9.0
 - Update bundled `snakefmt` to `0.11.4`
 - Require Python 3.11+ (previously 3.8)

@@ -29,12 +29,12 @@ rule bwa_map:
         temp(
             "mapped_reads/{sample}.bam"
         ),
-    params:
-        rg=r"@RG\tID:{sample}\tSM:{sample}",
-        dummy="dm",
     log:
         "logs/bwa_mem/{sample}.log",
     threads: 8
+    params:
+        rg=r"@RG\tID:{sample}\tSM:{sample}",
+        dummy="dm",
     shell:
         "(bwa mem -R '{params.rg}' -t {threads} {input} | "
         "samtools view -Sb - > {output}) 2> {log}"
