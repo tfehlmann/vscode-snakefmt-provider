@@ -122,9 +122,9 @@ pytokens==0.4.1 \
     --hash=sha256:ee44d0f85b803321710f9239f335aafe16553b39106384cef8e6de40cb4ef2f6 \
     --hash=sha256:f66a6bbe741bd431f6d741e617e0f39ec7257ca1f89089593479347cc4d13324
     # via black
-snakefmt==1.0.0 \
-    --hash=sha256:4ba7af112692d482776059f78e385c70d8739014c538bf57b77ec3b8b70329e2 \
-    --hash=sha256:6b825ad3b0bf80f587b3377923871f85e9931488f84b7a965db73292296004e6
+snakefmt==1.1.0 \
+    --hash=sha256:61bdf9e76ffa3756196b122d6aa7a9333fb44bdf5bd5f04672a76d9c0bae31cc \
+    --hash=sha256:72f7405c55447a072e5a8356bff0f712d8a37bbdddb79d0ed843ce9453a75d08
     # via -r requirements.in
 typing-extensions==4.15.0 \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \
