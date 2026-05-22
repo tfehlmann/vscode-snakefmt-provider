@@ -1,0 +1,8 @@
+packages:
+  - "."
+
+allowBuilds:
+  "@vscode/vsce-sign": false
+  keytar: false
+
+minimumReleaseAge: 4320

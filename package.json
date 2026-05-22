@@ -3,6 +3,7 @@
     "displayName": "Snakefmt",
     "description": "Linting and formatting support for snakemake files using `snakefmt`.",
     "version": "0.11.1",
+    "packageManager": "pnpm@11.2.2",
     "preview": false,
     "serverInfo": {
         "name": "Snakefmt",
@@ -55,17 +56,17 @@
     ],
     "main": "./dist/extension.js",
     "scripts": {
-        "vscode:prepublish": "npm run package",
+        "vscode:prepublish": "corepack pnpm run package",
         "compile": "webpack",
         "watch": "webpack --watch",
         "package": "webpack --mode production --devtool source-map --config ./webpack.config.js",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
-        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "pretest": "corepack pnpm run compile-tests && corepack pnpm run compile && corepack pnpm run lint",
         "lint": "eslint src",
         "format-check": "prettier --check 'src/**/*.ts' '.github/**/*.yml'",
         "test": "node ./out/test/runTest.js",
-        "vsce-package": "vsce package -o snakefmt.vsix"
+        "vsce-package": "vsce package --no-dependencies -o snakefmt.vsix"
     },
     "contributes": {
         "configuration": {
@@ -166,6 +167,7 @@
     "dependencies": {
         "@vscode/python-extension": "^1.0.5",
         "fs-extra": "^11.2.0",
+        "vscode-jsonrpc": "^8.1.0",
         "vscode-languageclient": "^8.1.0"
     },
     "devDependencies": {
@@ -178,6 +180,7 @@
         "@vscode/vsce": "^3.2.2",
         "eslint": "^9.22.0",
         "glob": "^11.0.1",
+        "ovsx": "^0.10.12",
         "prettier": "^3.5.3",
         "ts-loader": "^9.5.2",
         "typescript": "^5.8.2",

@@ -1,0 +1,40 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        "config:recommended",
+        ":dependencyDashboard",
+        "helpers:pinGitHubActionDigests"
+    ],
+    "labels": ["debt"],
+    "minimumReleaseAge": "3 days",
+    "minimumReleaseAgeBehaviour": "timestamp-required",
+    "internalChecksFilter": "strict",
+    "prCreation": "not-pending",
+    "automerge": true,
+    "automergeType": "pr",
+    "automergeStrategy": "squash",
+    "platformAutomerge": true,
+    "rangeStrategy": "pin",
+    "lockFileMaintenance": {
+        "enabled": true,
+        "automerge": true
+    },
+    "packageRules": [
+        {
+            "description": "Keep major upgrades manual.",
+            "matchUpdateTypes": ["major"],
+            "automerge": false
+        },
+        {
+            "description": "Keep VS Code API compatibility updates manual.",
+            "matchPackageNames": ["@types/vscode", "vscode-languageclient"],
+            "automerge": false
+        },
+        {
+            "description": "Keep GitHub Actions pinned to full commit SHAs.",
+            "matchManagers": ["github-actions"],
+            "pinDigests": true
+        }
+    ],
+    "ignorePaths": ["node_modules/**", "bundled/libs/**", "dist/**", "out/**"]
+}

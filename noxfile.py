@@ -7,12 +7,20 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import stat
+import tempfile
+import tomllib
 import urllib.request as url_lib
 import zipfile
 from typing import List, Optional, Union
 
 import nox  # pylint: disable=import-error
+
+ROOT = pathlib.Path(__file__).parent
+BUNDLED_LIBS = ROOT / "bundled" / "libs"
+
+nox.options.default_venv_backend = "uv"
 
 SHFMT_PLATFORM_MARKERS = {
     "macosx_10_9_x86_64": "darwin-x64",
@@ -24,17 +32,37 @@ SHFMT_PLATFORM_MARKERS = {
 
 
 def _install_bundle(session: nox.Session) -> None:
-    session.install(
-        "-t",
-        "./bundled/libs",
-        "--no-cache-dir",
-        "--implementation",
-        "py",
-        "--no-deps",
-        "--upgrade",
-        "-r",
-        "./requirements.txt",
-    )
+    shutil.rmtree(BUNDLED_LIBS, ignore_errors=True)
+    BUNDLED_LIBS.mkdir(parents=True, exist_ok=True)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        requirements = pathlib.Path(tmpdir) / "requirements.txt"
+        session.run(
+            "uv",
+            "--quiet",
+            "export",
+            "--frozen",
+            "--no-default-groups",
+            "--no-emit-project",
+            "--format",
+            "requirements.txt",
+            "--output-file",
+            os.fspath(requirements),
+            external=True,
+        )
+        session.run(
+            "uv",
+            "pip",
+            "install",
+            "--target",
+            os.fspath(BUNDLED_LIBS),
+            "--no-cache",
+            "--no-deps",
+            "--require-hashes",
+            "-r",
+            os.fspath(requirements),
+            external=True,
+        )
     _install_shfmt_binaries()
 
 
@@ -51,7 +79,7 @@ def _install_shfmt_binaries() -> None:
         return
 
     data = _get_pypi_package_data("shfmt-py")
-    bin_root = pathlib.Path(__file__).parent / "bundled" / "libs" / "bin"
+    bin_root = BUNDLED_LIBS / "bin"
 
     for release in data["releases"][version]:
         platform_name = _get_shfmt_platform(release["filename"])
@@ -85,9 +113,8 @@ def _install_shfmt_binaries() -> None:
 
 
 def _check_files(names: List[str]) -> None:
-    root_dir = pathlib.Path(__file__).parent
     for name in names:
-        file_path = root_dir / name
+        file_path = ROOT / name
         lines: List[str] = file_path.read_text().splitlines()
         if any(line for line in lines if line.startswith("# TODO:")):
             # pylint: disable=broad-exception-raised
@@ -95,26 +122,11 @@ def _check_files(names: List[str]) -> None:
 
 
 def _update_pip_packages(session: nox.Session) -> None:
-    session.run(
-        "pip-compile",
-        "--generate-hashes",
-        "--resolver=backtracking",
-        "--upgrade",
-        "./requirements.in",
-    )
-    session.run(
-        "pip-compile",
-        "--generate-hashes",
-        "--resolver=backtracking",
-        "--upgrade",
-        "./src/test/python_tests/requirements.in",
-    )
+    session.run("uv", "lock", "--upgrade", external=True)
 
 
-def _get_package_data(package):
-    json_uri = f"https://registry.npmjs.org/{package}"
-    with url_lib.urlopen(json_uri) as response:
-        return json.loads(response.read())
+def _run_pnpm(session: nox.Session, *args: str) -> None:
+    session.run("corepack", "pnpm", *args, external=True)
 
 
 def _update_npm_packages(session: nox.Session) -> None:
@@ -122,20 +134,8 @@ def _update_npm_packages(session: nox.Session) -> None:
         "vscode-languageclient",
         "@types/vscode",
     }
-    package_json_path = pathlib.Path(__file__).parent / "package.json"
+    package_json_path = ROOT / "package.json"
     package_json = json.loads(package_json_path.read_text(encoding="utf-8"))
-
-    for package in package_json["dependencies"]:
-        if package not in pinned:
-            data = _get_package_data(package)
-            latest = "^" + data["dist-tags"]["latest"]
-            package_json["dependencies"][package] = latest
-
-    for package in package_json["devDependencies"]:
-        if package not in pinned:
-            data = _get_package_data(package)
-            latest = "^" + data["dist-tags"]["latest"]
-            package_json["devDependencies"][package] = latest
 
     # Ensure engine matches the package
     if (
@@ -146,26 +146,39 @@ def _update_npm_packages(session: nox.Session) -> None:
             "Please check VS Code engine version and @types/vscode version in package.json."
         )
 
-    new_package_json = json.dumps(package_json, indent=4)
-    # JSON dumps uses \n for line ending on all platforms by default
-    if not new_package_json.endswith("\n"):
-        new_package_json += "\n"
-    package_json_path.write_text(new_package_json, encoding="utf-8")
+    packages = [
+        package
+        for package in [
+            *package_json["dependencies"],
+            *package_json["devDependencies"],
+        ]
+        if package not in pinned
+    ]
 
-    session.run("npm", "audit", "fix", external=True, success_codes=[0, 1])
-    session.run("npm", "install", external=True, success_codes=[0, 1])
+    _run_pnpm(session, "update", "--latest", *packages)
+    _run_pnpm(session, "install")
 
 
 def _setup_template_environment(session: nox.Session) -> None:
-    session.install("wheel", "pip-tools")
-    _update_pip_packages(session)
     _install_bundle(session)
+
+
+def _sync_groups(session: nox.Session, *groups: str) -> None:
+    args = [
+        "sync",
+        "--frozen",
+        "--active",
+        "--no-install-project",
+        "--no-default-groups",
+    ]
+    for group in groups:
+        args.extend(["--group", group])
+    session.run("uv", *args, external=True)
 
 
 @nox.session(python="3.11")
 def install_bundled_libs(session):
     """Installs the libraries that will be bundled with the extension."""
-    session.install("wheel")
     _install_bundle(session)
 
 
@@ -178,16 +191,15 @@ def setup(session: nox.Session) -> None:
 @nox.session()
 def tests(session: nox.Session) -> None:
     """Runs all the tests for the extension."""
-    session.install("-r", "src/test/python_tests/requirements.txt")
+    _sync_groups(session, "test")
     session.run("pytest", "src/test/python_tests", "-s")
 
 
 @nox.session()
 def lint(session: nox.Session) -> None:
     """Runs linter and formatter checks on python files."""
-    session.install("-r", "src/test/python_tests/requirements.txt")
+    _sync_groups(session, "test", "lint")
 
-    session.install("pylint")
     session.run("pylint", "./bundled/tool")
     session.run(
         "pylint",
@@ -196,19 +208,17 @@ def lint(session: nox.Session) -> None:
     )
     session.run("pylint", "noxfile.py")
     # check formatting using black
-    session.install("black")
     session.run("black", "--check", "./bundled/tool")
     session.run("black", "--check", "./src/test/python_tests")
     session.run("black", "--check", "noxfile.py")
 
     # check import sorting using isort
-    session.install("isort")
     session.run("isort", "--check", "./bundled/tool")
     session.run("isort", "--check", "./src/test/python_tests")
     session.run("isort", "--check", "noxfile.py")
 
     # check typescript code
-    session.run("npm", "run", "lint", external=True)
+    _run_pnpm(session, "run", "lint")
 
 
 @nox.session()
@@ -216,8 +226,8 @@ def build_package(session: nox.Session) -> None:
     """Builds VSIX package for publishing."""
     _check_files(["README.md", "LICENSE"])
     _setup_template_environment(session)
-    session.run("npm", "install", external=True)
-    session.run("npm", "run", "vsce-package", external=True)
+    _run_pnpm(session, "install", "--frozen-lockfile")
+    _run_pnpm(session, "run", "vsce-package")
 
 
 @nox.session()
@@ -227,7 +237,7 @@ def update_build_number(session: nox.Session) -> None:
         session.log("No updates to package version")
         return
 
-    package_json_path = pathlib.Path(__file__).parent / "package.json"
+    package_json_path = ROOT / "package.json"
     session.log(f"Reading package.json at: {package_json_path}")
 
     package_json = json.loads(package_json_path.read_text(encoding="utf-8"))
@@ -244,26 +254,31 @@ def update_build_number(session: nox.Session) -> None:
 
 
 def _get_module_name() -> str:
-    package_json_path = pathlib.Path(__file__).parent / "package.json"
+    package_json_path = ROOT / "package.json"
     package_json = json.loads(package_json_path.read_text(encoding="utf-8"))
     return package_json["serverInfo"]["module"]
 
 
 def _get_version(module: str) -> Union[str, None]:
-    requirements_file = pathlib.Path(__file__).parent / "requirements.txt"
-    lines = requirements_file.read_text(encoding="utf-8").splitlines(keepends=False)
-    for line in lines:
-        if line.startswith(module):
-            _, version = line.split(" ")[0].split("==")
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    for dependency in pyproject["project"]["dependencies"]:
+        if dependency.startswith(f"{module}=="):
+            _, version = dependency.split("==", 1)
             return version
+
+    lockfile = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
+    for package in lockfile["package"]:
+        if package["name"] == module:
+            return package["version"]
+
     return None
 
 
 @nox.session()
 def validate_readme(session: nox.Session) -> None:
-    """Ensures the formatter version in 'requirements.txt' matches 'readme.md'."""
+    """Ensures the bundled formatter version matches README.md."""
 
-    readme_file = pathlib.Path(__file__).parent / "README.md"
+    readme_file = ROOT / "README.md"
 
     name = _get_module_name()
     version = _get_version(name)
@@ -276,23 +291,19 @@ def validate_readme(session: nox.Session) -> None:
 
 
 def _update_readme() -> None:
-    requirements_file = pathlib.Path(__file__).parent / "requirements.txt"
-    lines = requirements_file.read_text(encoding="utf-8").splitlines(keepends=False)
     module = _get_module_name()
-    formatter_ver = list(line for line in lines if line.startswith(module))[0]
-    _, version = formatter_ver.split(" ")[0].split("==")
+    version = _get_version(module)
 
-    readme_file = pathlib.Path(__file__).parent / "README.md"
+    readme_file = ROOT / "README.md"
     content = readme_file.read_text(encoding="utf-8")
     regex = r"\`([a-zA-Z0-9]+)=([0-9]+\.[0-9]+\.[0-9]+)\`"
     result = re.sub(regex, f"`{module}={version}`", content, 0, re.MULTILINE)
-    content = readme_file.write_text(result, encoding="utf-8")
+    readme_file.write_text(result, encoding="utf-8")
 
 
 @nox.session()
 def update_packages(session: nox.Session) -> None:
-    """Update pip and npm packages."""
-    session.install("wheel", "pip-tools")
+    """Update Python and Node packages."""
     _update_pip_packages(session)
     _update_npm_packages(session)
     _update_readme()
