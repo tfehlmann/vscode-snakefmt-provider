@@ -1,6 +1,6 @@
 # Snakefmt extension for Visual Studio Code
 
-A [Visual Studio Code](https://code.visualstudio.com/) extension that formats [Snakemake](https://snakemake.readthedocs.io/) code using [Snakefmt](https://github.com/snakemake/snakefmt). The extension ships with `snakefmt=1.0.0`. 
+A [Visual Studio Code](https://code.visualstudio.com/) extension that formats [Snakemake](https://snakemake.readthedocs.io/) code using [Snakefmt](https://github.com/snakemake/snakefmt). The extension ships with `snakefmt=2.0.0`.
 The bundled `snakefmt` is used if no `path` to the executable or `interpreter` is specified.
 
 ## Features
@@ -171,6 +171,12 @@ Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider
 
 ## Release Notes
 
+### 0.11.0
+- Update bundled `snakefmt` to `2.0.0`
+- **Breaking**: snakefmt now formats shell blocks in rules by default. Users can opt out with `--no-format-shell` via `snakefmt.args` or `format_shell = false` in `pyproject.toml`
+- Add bundled `shfmt-py` support required by snakefmt shell formatting
+- Update bundled `black` to `26.5.1`
+
 ### 0.10.0
 - Update bundled `snakefmt` to `1.0.0`
 - **Breaking**: snakefmt now automatically reorders rule directives by default. Users can opt out with `--no-sort` via `snakefmt.args`
@@ -215,4 +221,3 @@ Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider
 ### 0.1.0
 
 Initial release
-

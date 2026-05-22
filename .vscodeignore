@@ -16,6 +16,16 @@ vsc-extension-quickstart.md
 **/__pycache__/**
 **/.pyc
 bundled/libs/bin/**
+!bundled/libs/bin/darwin-arm64/
+!bundled/libs/bin/darwin-arm64/shfmt
+!bundled/libs/bin/darwin-x64/
+!bundled/libs/bin/darwin-x64/shfmt
+!bundled/libs/bin/linux-arm64/
+!bundled/libs/bin/linux-arm64/shfmt
+!bundled/libs/bin/linux-x64/
+!bundled/libs/bin/linux-x64/shfmt
+!bundled/libs/bin/win32-x64/
+!bundled/libs/bin/win32-x64/shfmt.exe
 noxfile.py
 .pytest_cache/**
 .pylintrc

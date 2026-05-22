@@ -6,7 +6,9 @@ Runner to use when running under a different interpreter.
 
 import os
 import pathlib
+import platform
 import sys
+import sysconfig
 import traceback
 
 
@@ -22,6 +24,50 @@ def update_sys_path(path_to_add: str, strategy: str) -> None:
             sys.path.append(path_to_add)
 
 
+def get_bundled_scripts_dir() -> pathlib.Path | None:
+    """Return bundled executable directory for the current platform."""
+    machine = platform.machine().lower()
+    if machine in {"amd64", "x86_64"}:
+        arch = "x64"
+    elif machine in {"aarch64", "arm64"}:
+        arch = "arm64"
+    else:
+        return None
+
+    if sys.platform.startswith("linux"):
+        os_name = "linux"
+    elif sys.platform == "darwin":
+        os_name = "darwin"
+    elif sys.platform == "win32":
+        os_name = "win32"
+    else:
+        return None
+
+    return BUNDLE_DIR / "libs" / "bin" / f"{os_name}-{arch}"
+
+
+def update_environ_path() -> None:
+    """Update PATH with bundled executables and interpreter scripts."""
+    candidate_paths = [
+        get_bundled_scripts_dir(),
+        pathlib.Path(sysconfig.get_path("scripts")),
+    ]
+    paths_to_add = [
+        os.fspath(candidate)
+        for candidate in candidate_paths
+        if candidate is not None and candidate.is_dir()
+    ]
+    if not paths_to_add:
+        return
+
+    var_name = "Path" if "Path" in os.environ else "PATH"
+    paths = os.environ.get(var_name, "").split(os.pathsep)
+    for path_to_add in reversed(paths_to_add):
+        if path_to_add not in paths:
+            paths.insert(0, path_to_add)
+    os.environ[var_name] = os.pathsep.join(path for path in paths if path)
+
+
 # Ensure that we can import LSP libraries, and other bundled libraries.
 BUNDLE_DIR = pathlib.Path(__file__).parent.parent
 # Always use bundled server files.
@@ -30,6 +76,7 @@ update_sys_path(
     os.fspath(BUNDLE_DIR / "libs"),
     os.getenv("LS_IMPORT_STRATEGY", "useBundled"),
 )
+update_environ_path()
 
 
 # pylint: disable=wrong-import-position,import-error
