@@ -1,0 +1,10 @@
+/.github/CODEOWNERS @tfehlmann
+/.github/actions/ @tfehlmann
+/.github/workflows/ @tfehlmann
+/noxfile.py @tfehlmann
+/package.json @tfehlmann
+/pnpm-lock.yaml @tfehlmann
+/pnpm-workspace.yaml @tfehlmann
+/pyproject.toml @tfehlmann
+/renovate.json @tfehlmann
+/uv.lock @tfehlmann

@@ -739,7 +739,7 @@ def _run_tool(extra_args: Sequence[str], settings: Dict[str, Any]) -> utils.RunR
         if result.stderr:
             log_to_output(result.stderr)
 
-    if LSP_SERVER.protocol.trace == lsp.TraceValues.Verbose:
+    if LSP_SERVER.protocol.trace == lsp.TraceValue.Verbose:
         log_to_output(f"\r\n{result.stdout}\r\n")
 
     return result

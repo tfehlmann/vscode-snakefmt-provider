@@ -1,0 +1,35 @@
+[project]
+name = "vscode-snakefmt-provider"
+version = "0.11.1"
+requires-python = ">=3.11"
+dependencies = [
+    "packaging==26.2",
+    "pygls==2.1.1",
+    "snakefmt==2.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "nox==2026.4.10",
+]
+lint = [
+    "black==26.5.1",
+    "isort==8.0.1",
+    "pylint==4.0.5",
+]
+test = [
+    "colorama==0.4.6",
+    "pyhamcrest==2.1.0",
+    "pytest==9.0.3",
+    "python-jsonrpc-server==0.4.0",
+]
+
+[tool.uv]
+package = false
+default-groups = []
+exclude-newer = "3 days"
+# snakefmt 2.0.0 was released as part of this update before the age gate was added.
+exclude-newer-package = { snakefmt = false }
+
+[tool.black]
+target-version = ["py311"]
