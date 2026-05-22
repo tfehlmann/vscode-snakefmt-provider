@@ -171,6 +171,9 @@ Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider
 
 ## Release Notes
 
+### 0.11.1
+- Update npm and Python test dependencies to resolve Dependabot security alerts
+
 ### 0.11.0
 - Update bundled `snakefmt` to `2.0.0`
 - **Breaking**: snakefmt now formats shell blocks in rules by default. Users can opt out with `--no-format-shell` via `snakefmt.args` or `format_shell = false` in `pyproject.toml`
