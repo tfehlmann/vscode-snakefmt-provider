@@ -1,4 +1,10 @@
 # Change Log
+### 0.11.0
+- Update bundled `snakefmt` to `2.0.0`
+- **Breaking**: snakefmt now formats shell blocks in rules by default. Users can opt out with `--no-format-shell` via `snakefmt.args` or `format_shell = false` in `pyproject.toml`
+- Add bundled `shfmt-py` support required by snakefmt shell formatting
+- Update bundled `black` to `26.5.1`
+
 ### 0.10.0
 - Update bundled `snakefmt` to `1.0.0`
 - **Breaking**: snakefmt now automatically reorders rule directives by default. Users can opt out with `--no-sort` via `snakefmt.args`
@@ -42,4 +48,3 @@
 
 ## 0.1.0
 Initial release
-

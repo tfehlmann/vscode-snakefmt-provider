@@ -7,11 +7,20 @@ import json
 import os
 import pathlib
 import re
+import stat
 import urllib.request as url_lib
 import zipfile
 from typing import List, Optional, Union
 
 import nox  # pylint: disable=import-error
+
+SHFMT_PLATFORM_MARKERS = {
+    "macosx_10_9_x86_64": "darwin-x64",
+    "macosx_11_0_arm64": "darwin-arm64",
+    "manylinux2014_x86_64": "linux-x64",
+    "manylinux2014_aarch64": "linux-arm64",
+    "win_amd64": "win32-x64",
+}
 
 
 def _install_bundle(session: nox.Session) -> None:
@@ -26,6 +35,53 @@ def _install_bundle(session: nox.Session) -> None:
         "-r",
         "./requirements.txt",
     )
+    _install_shfmt_binaries()
+
+
+def _get_shfmt_platform(filename: str) -> Optional[str]:
+    for marker, platform_name in SHFMT_PLATFORM_MARKERS.items():
+        if marker in filename:
+            return platform_name
+    return None
+
+
+def _install_shfmt_binaries() -> None:
+    version = _get_version("shfmt-py")
+    if version is None:
+        return
+
+    data = _get_pypi_package_data("shfmt-py")
+    bin_root = pathlib.Path(__file__).parent / "bundled" / "libs" / "bin"
+
+    for release in data["releases"][version]:
+        platform_name = _get_shfmt_platform(release["filename"])
+        if platform_name is None:
+            continue
+
+        script_name = "shfmt.exe" if platform_name.startswith("win32") else "shfmt"
+        script_suffix = f".data/scripts/{script_name}"
+        print(f"Installing {script_name} for {platform_name}")
+
+        with url_lib.urlopen(release["url"]) as response:
+            with zipfile.ZipFile(io.BytesIO(response.read()), "r") as wheel:
+                script_members = [
+                    name for name in wheel.namelist() if name.endswith(script_suffix)
+                ]
+                if len(script_members) != 1:
+                    raise RuntimeError(
+                        f"Expected one {script_name} in {release['filename']}."
+                    )
+
+                target_dir = bin_root / platform_name
+                target_dir.mkdir(parents=True, exist_ok=True)
+                target_path = target_dir / script_name
+                target_path.write_bytes(wheel.read(script_members[0]))
+                target_path.chmod(
+                    target_path.stat().st_mode
+                    | stat.S_IXUSR
+                    | stat.S_IXGRP
+                    | stat.S_IXOTH
+                )
 
 
 def _check_files(names: List[str]) -> None:
