@@ -9,7 +9,6 @@
     "minimumReleaseAge": "3 days",
     "minimumReleaseAgeBehaviour": "timestamp-required",
     "internalChecksFilter": "strict",
-    "prCreation": "not-pending",
     "automerge": true,
     "automergeType": "pr",
     "automergeStrategy": "squash",
