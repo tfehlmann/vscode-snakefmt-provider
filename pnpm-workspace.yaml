@@ -6,3 +6,10 @@ allowBuilds:
   keytar: false
 
 minimumReleaseAge: 4320
+
+overrides:
+  form-data: 4.0.6
+  js-yaml: 4.2.0
+  markdown-it: 14.2.0
+  tmp: 0.2.7
+  undici: 7.28.0
