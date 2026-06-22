@@ -414,16 +414,16 @@ wheels = [
 
 [[package]]
 name = "snakefmt"
-version = "2.0.0"
+version = "2.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "black" },
     { name = "click" },
     { name = "shfmt-py" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8e/0a/ce930eafdc3ea5999c6fd65cb473c33a3f310606907e6de0241ec5e5f149/snakefmt-2.0.0.tar.gz", hash = "sha256:a47259b1fcd958b73e59052e2425708240652b7b2f9ff7d6b2b14d2894f10b33", size = 164044, upload-time = "2026-05-22T00:10:13.758Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1a/40/6c05d546237a73be5e80434682534337854fb7556713447c1c31236ba14c/snakefmt-2.0.2.tar.gz", hash = "sha256:aa037ff2579fcdb76f4d5b722b3438738fff05924d43faf4655ff7eebd64152a", size = 167261, upload-time = "2026-06-17T05:08:24.507Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a4/85/1bee3af4e9264d301769cf4475f58d987840334d274d3889f17682115105/snakefmt-2.0.0-py3-none-any.whl", hash = "sha256:300c983d653e70050ca7644f17c09ac3f88daf9d9abeb6dd8c2b34a1ce821b87", size = 43228, upload-time = "2026-05-22T00:10:12.026Z" },
+    { url = "https://files.pythonhosted.org/packages/28/ae/08717a4b9577c72116c3ce2b251df15736cfd855cb4568149b059aed7018/snakefmt-2.0.2-py3-none-any.whl", hash = "sha256:d161b0ab320f0baa95dadb03a841ea9883b39e091cf875629e5550226ad1960a", size = 44136, upload-time = "2026-06-17T05:08:23.335Z" },
 ]
 
 [[package]]
@@ -576,7 +576,7 @@ test = [
 requires-dist = [
     { name = "packaging", specifier = "==26.2" },
     { name = "pygls", specifier = "==2.1.1" },
-    { name = "snakefmt", specifier = "==2.0.0" },
+    { name = "snakefmt", specifier = "==2.0.2" },
 ]
 
 [package.metadata.requires-dev]

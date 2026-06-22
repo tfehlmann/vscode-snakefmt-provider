@@ -1,6 +1,6 @@
 # Snakefmt extension for Visual Studio Code
 
-A [Visual Studio Code](https://code.visualstudio.com/) extension that formats [Snakemake](https://snakemake.readthedocs.io/) code using [Snakefmt](https://github.com/snakemake/snakefmt). The extension ships with `snakefmt=2.0.0`.
+A [Visual Studio Code](https://code.visualstudio.com/) extension that formats [Snakemake](https://snakemake.readthedocs.io/) code using [Snakefmt](https://github.com/snakemake/snakefmt). The extension ships with `snakefmt=2.0.2`.
 The bundled `snakefmt` is used if no `path` to the executable or `interpreter` is specified.
 
 ## Features
