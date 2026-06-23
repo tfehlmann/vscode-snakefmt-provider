@@ -20,7 +20,7 @@ lint = [
 test = [
     "colorama==0.4.6",
     "pyhamcrest==2.1.0",
-    "pytest==9.0.3",
+    "pytest==9.1.1",
     "python-jsonrpc-server==0.4.0",
 ]
 
