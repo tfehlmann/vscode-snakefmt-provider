@@ -175,7 +175,7 @@
         "@types/fs-extra": "^11.0.4",
         "@types/glob": "^8.1.0",
         "@types/node": "20.x",
-        "@types/vscode": "^1.74.0",
+        "@types/vscode": "^1.120.0",
         "@vscode/test-electron": "^2.4.1",
         "@vscode/vsce": "^3.9.1",
         "eslint": "^9.22.0",

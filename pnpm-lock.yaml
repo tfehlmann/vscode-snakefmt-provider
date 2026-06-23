@@ -41,7 +41,7 @@ importers:
         specifier: 20.x
         version: 20.19.41
       '@types/vscode':
-        specifier: ^1.74.0
+        specifier: ^1.120.0
         version: 1.120.0
       '@vscode/test-electron':
         specifier: ^2.4.1
