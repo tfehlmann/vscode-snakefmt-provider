@@ -6,6 +6,8 @@
         "helpers:pinGitHubActionDigests"
     ],
     "labels": ["debt"],
+    "timezone": "America/Los_Angeles",
+    "schedule": ["before 5am on monday"],
     "minimumReleaseAge": "3 days",
     "minimumReleaseAgeBehaviour": "timestamp-required",
     "internalChecksFilter": "strict",
@@ -17,6 +19,10 @@
     "lockFileMaintenance": {
         "enabled": true,
         "automerge": true
+    },
+    "vulnerabilityAlerts": {
+        "enabled": true,
+        "addLabels": ["security"]
     },
     "packageRules": [
         {
