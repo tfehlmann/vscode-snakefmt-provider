@@ -1,4 +1,13 @@
 # Change Log
+### 0.11.3
+- Update bundled `snakefmt` to `2.0.3`
+- Update CI and release tooling to `uv` `0.11.24`
+
+### 0.11.2
+- Update bundled `snakefmt` to `2.0.2`
+- Fix Renovate PR creation so dependency updates are no longer blocked behind pending PR-only checks
+- Override vulnerable npm transitive dependencies and update `ujson` to resolve Dependabot alerts
+
 ### 0.11.1
 - Update npm and Python test dependencies to resolve Dependabot security alerts
 

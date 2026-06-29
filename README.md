@@ -171,6 +171,10 @@ Available on github: https://github.com/tfehlmann/vscode-snakefmt-provider
 
 ## Release Notes
 
+### 0.11.3
+- Update bundled `snakefmt` to `2.0.3`
+- Update CI and release tooling to `uv` `0.11.24`
+
 ### 0.11.2
 - Update bundled `snakefmt` to `2.0.2`
 - Fix Renovate PR creation so dependency updates are no longer blocked behind pending PR-only checks
