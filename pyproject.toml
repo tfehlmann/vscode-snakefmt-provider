@@ -1,6 +1,6 @@
 [project]
 name = "vscode-snakefmt-provider"
-version = "0.11.2"
+version = "0.11.3"
 requires-python = ">=3.11"
 dependencies = [
     "packaging==26.2",
