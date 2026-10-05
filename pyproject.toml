@@ -10,7 +10,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "nox==2026.4.10",
+    "nox==2026.8.17",
 ]
 lint = [
     "black==26.5.1",
